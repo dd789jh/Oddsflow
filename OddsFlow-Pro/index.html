@@ -138,9 +138,10 @@
 
     <!-- 核心逻辑区 (数据处理 + 语言切换) -->
     <script>
-        // 1. 这里放你 N8N 的 JSON 数据！
+        // 1. 数据源 (混合了比赛和广告)
         const matchesData = [
           {
+            "type": "match", // 这是一个比赛
             "result": {
               "match_info": {
                 "league": "Indonesia Super League",
@@ -148,22 +149,62 @@
                 "away_team": "Semen Padang",
                 "score": "1-2",
                 "minute": 94,
-                "red_home": 1,
-                "red_away": 0,
-                "dangerous_attacks_home": 46,
-                "dangerous_attacks_away": 69,
-                "corners_home": 2,
-                "corners_away": 6,
-                "shots_on_target_home": 3,
-                "shots_on_target_away": 3
+                "red_home": 1, "red_away": 0,
+                "dangerous_attacks_home": 46, "dangerous_attacks_away": 69,
+                "corners_home": 2, "corners_away": 6,
+                "shots_on_target_home": 3, "shots_on_target_away": 3
               },
-              "beginner_friendly_text": "这场比赛节奏很快（得分8）。客队在危险进攻上比主队多，说明客队发起的有威胁的进攻更多，最近的比赛动力也在客队一方。",
+              "pre_match_info": {
+                "table_rank": "14th vs 2nd",
+                "form_home": ["L","L","D","L","W"],
+                "form_away": ["W","W","W","D","W"],
+                "h2h": "Semen Padang 近 5 次交手 4 胜 1 平",
+                "avg_goals": "2.8 球/场"
+              },
+              "beginner_friendly_text": "这场比赛节奏很快（得分8）。客队在危险进攻上比主队多，且主队有一张红牌，防守压力巨大。",
               "bet_recommendation": {
                 "bet_type": "Lean to Away",
-                "confidence_level": "Medium",
-                "risk_level": "High"
+                "confidence_level": "High"
               }
             }
+          },
+          {
+            "type": "ad", // 🔥 这是一个广告位 (Mock Data)
+            "content": {
+              "brand": "BK8 亚洲第一体育",
+              "title": "🔥 OddsFlow 独家福利：首存送 2888",
+              "desc": "秒提款，不限额，支持 USDT。新用户注册即送 VIP 体验金。",
+              "btn_text": "领取红利",
+              "link": "https://t.me/YourAdContact" // 这里放你的联系方式，让广告商找你
+            }
+          },
+          {
+             "type": "match", // 第二场比赛 (为了让列表看起来长一点)
+             "result": {
+               "match_info": {
+                 "league": "English Premier League",
+                 "home_team": "Liverpool",
+                 "away_team": "Chelsea",
+                 "score": "0-0",
+                 "minute": 23,
+                 "red_home": 0, "red_away": 0,
+                 "dangerous_attacks_home": 12, "dangerous_attacks_away": 5,
+                 "corners_home": 3, "corners_away": 0,
+                 "shots_on_target_home": 2, "shots_on_target_away": 0
+               },
+               "pre_match_info": {
+                 "table_rank": "1st vs 4th",
+                 "form_home": ["W","W","W","W","D"],
+                 "form_away": ["W","D","W","L","W"],
+                 "h2h": "Liverpool 主场优势明显",
+                 "avg_goals": "3.1 球/场"
+               },
+               "beginner_friendly_text": "开场阶段利物浦控制局面，控球率 65%。虽然没有进球，但进攻压力正在积累。",
+               "bet_recommendation": {
+                 "bet_type": "Liverpool -0.5",
+                 "confidence_level": "Medium"
+               }
+             }
           }
         ];
 
