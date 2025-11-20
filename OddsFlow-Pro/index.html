@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OddsFlow AI - 智能足球交易终端</title>
+    <meta name="description" content="OddsFlow AI 利用 N8N 自动化追踪实时赔率，识别价值注，捕捉绝杀信号。最专业的足球交易分析工具。">
+    
+    <!-- 引入 Tailwind CSS (样式库) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 FontAwesome (图标库) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- 引入 Google Fonts (高级字体) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* 全局样式设定 */
+        body { font-family: 'Inter', sans-serif; background-color: #0a0a0a; color: #e5e7eb; }
+        
+        /* 霓虹光效与渐变 */
+        .text-gradient { background: linear-gradient(to right, #34d399, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .bg-glass { background: rgba(20, 20, 20, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .glow-card:hover { box-shadow: 0 0 30px rgba(52, 211, 153, 0.15); border-color: rgba(52, 211, 153, 0.3); }
+        
+        /* 动画效果 */
+        @keyframes pulse-green {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(52, 211, 153, 0); }
+        }
+        .live-dot { animation: pulse-green 2s infinite; }
+        
+        /* 隐藏滚动条 */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* 页面切换控制 */
+        .page-section { display: none; opacity: 0; transition: opacity 0.3s ease-in-out; }
+        .page-section.active { display: block; opacity: 1; }
+    </style>
+</head>
+<body class="antialiased h-screen flex flex-col overflow-hidden">
+
+    <!-- 顶部导航栏 (Top Bar) -->
+    <nav class="w-full h-16 border-b border-gray-800 bg-black/80 backdrop-blur-md flex items-center justify-between px-6 z-50 shrink-0">
+        <!-- Logo -->
+        <div class="flex items-center gap-2 cursor-pointer" onclick="switchTab('home')">
+            <div class="w-8 h-8 bg-gradient-to-br from-emerald-500 to-blue-600 rounded-lg flex items-center justify-center text-black font-bold">
+                <i class="fas fa-bolt"></i>
+            </div>
+            <span class="font-bold text-xl tracking-tight text-white">OddsFlow<span class="text-emerald-500">.ai</span></span>
+        </div>
+
+        <!-- 菜单 (桌面端) -->
+        <div class="hidden md:flex items-center gap-8 text-sm font-medium text-gray-400">
+            <button onclick="switchTab('home')" class="hover:text-white transition nav-btn text-white" data-target="home">首页介绍</button>
+            <button onclick="switchTab('dashboard')" class="hover:text-white transition nav-btn" data-target="dashboard">
+                <i class="fas fa-chart-radar mr-1"></i> 交易终端
+            </button>
+            <button onclick="switchTab('guide')" class="hover:text-white transition nav-btn" data-target="guide">新手教程</button>
+            <button onclick="switchTab('pricing')" class="hover:text-white transition nav-btn" data-target="pricing">订阅价格</button>
+        </div>
+
+        <!-- CTA 按钮 -->
+        <a href="https://t.me/YourTelegramLink" target="_blank" class="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2 rounded-full font-bold text-xs transition shadow-lg shadow-emerald-500/20 flex items-center gap-2">
+            <i class="fab fa-telegram-plane"></i> 加入电报群
+        </a>
+    </nav>
+
+    <!-- 主内容区域 (可滚动) -->
+    <main class="flex-1 overflow-y-auto no-scrollbar relative">
+        
+        <!-- =========================================
+             1. 首页 (Landing Page)
+        ========================================== -->
+        <section id="home" class="page-section active min-h-full">
+            <div class="max-w-7xl mx-auto px-6 py-20 text-center">
+                <div class="inline-block px-4 py-1.5 rounded-full bg-emerald-900/30 border border-emerald-500/30 text-emerald-400 text-xs font-bold mb-8">
+                    🚀 全网首个 AI 驱动的足球交易扫描仪
+                </div>
+                <h1 class="text-5xl md:text-7xl font-black mb-6 leading-tight">
+                    别再盲目赌球。<br>
+                    <span class="text-gradient">开始像专家一样交易。</span>
+                </h1>
+                <p class="text-xl text-gray-400 max-w-2xl mx-auto mb-10">
+                    OddsFlow 实时监控全球 500+ 场比赛。当 <strong class="text-white">压力指数</strong> 爆表或 <strong class="text-white">赔率出现漏洞</strong> 时，AI 会在进球发生前 2 分钟通知你。
+                </p>
+                <div class="flex justify-center gap-4">
+                    <button onclick="switchTab('dashboard')" class="px-8 py-4 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition shadow-xl">
+                        进入演示终端
+                    </button>
+                    <button onclick="switchTab('guide')" class="px-8 py-4 bg-gray-800 text-white border border-gray-700 rounded-xl hover:bg-gray-700 transition font-bold">
+                        原理是什么？
+                    </button>
+                </div>
+
+                <!-- 信任背书 (Features) -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-20 text-left">
+                    <div class="bg-glass p-6 rounded-2xl glow-card transition">
+                        <i class="fas fa-tachometer-alt text-3xl text-emerald-400 mb-4"></i>
+                        <h3 class="text-lg font-bold text-white mb-2">压力可视化</h3>
+                        <p class="text-sm text-gray-400">独家算法计算进攻动能。一眼看穿谁在“围攻”，谁在“苟延残喘”。</p>
+                    </div>
+                    <div class="bg-glass p-6 rounded-2xl glow-card transition">
+                        <i class="fas fa-search-dollar text-3xl text-blue-400 mb-4"></i>
+                        <h3 class="text-lg font-bold text-white mb-2">价值注挖掘</h3>
+                        <p class="text-sm text-gray-400">AI 对比真实 xG 与庄家赔率。发现被市场低估的赔率，实现长线盈利。</p>
+                    </div>
+                    <div class="bg-glass p-6 rounded-2xl glow-card transition">
+                        <i class="fas fa-robot text-3xl text-purple-400 mb-4"></i>
+                        <h3 class="text-lg font-bold text-white mb-2">24/7 自动监控</h3>
+                        <p class="text-sm text-gray-400">你不用盯着屏幕。N8N 自动化引擎全天候工作，机会出现直接推送到手机。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- =========================================
+             2. 仪表盘 (Dashboard - The Product)
+        ========================================== -->
+        <section id="dashboard" class="page-section">
+            <div class="max-w-6xl mx-auto px-4 py-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 bg-red-500 rounded-full live-dot"></span>
+                        实时监控中心
+                    </h2>
+                    <div class="text-xs text-gray-500">数据源: BetsAPI (延迟 < 2s)</div>
+                </div>
+
+                <!-- 模拟数据列表 -->
+                <div class="space-y-4" id="match-list">
+                    <!-- 比赛卡片 1 -->
+                    <div class="bg-glass p-6 rounded-xl border-l-4 border-red-500 relative overflow-hidden group">
+                        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                            <!-- 比赛信息 -->
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="text-xs font-bold text-gray-400">英超 • 86'</span>
+                                    <span class="bg-red-500/20 text-red-500 text-[10px] px-1.5 py-0.5 rounded font-bold">绝杀预警</span>
+                                </div>
+                                <div class="flex items-center gap-4 text-xl font-bold">
+                                    <span>曼联</span>
+                                    <span class="px-3 py-1 bg-black/50 rounded text-emerald-400 font-mono">1 - 1</span>
+                                    <span class="text-gray-400">布伦特福德</span>
+                                </div>
+                            </div>
+                            
+                            <!-- 压力条 (核心视觉) -->
+                            <div class="w-full md:w-1/3">
+                                <div class="flex justify-between text-xs text-gray-400 mb-1">
+                                    <span>主队施压 (92%)</span>
+                                    <span>反击 (8%)</span>
+                                </div>
+                                <div class="h-2 bg-gray-700 rounded-full overflow-hidden">
+                                    <div class="h-full bg-gradient-to-r from-red-500 to-red-600 w-[92%] relative">
+                                        <div class="absolute right-0 top-0 bottom-0 w-1 bg-white animate-ping"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 推荐操作 -->
+                            <div class="text-right min-w-[120px]">
+                                <div class="text-xs text-gray-500 mb-1">推荐盘口</div>
+                                <div class="text-lg font-bold text-emerald-400">大球 2.5</div>
+                                <div class="text-xs text-gray-400">赔率 @ 1.95</div>
+                            </div>
+                        </div>
+                        
+                        <!-- AI 解读 (Hover显示) -->
+                        <div class="mt-4 pt-4 border-t border-white/5 text-sm text-gray-300 flex gap-2 items-start">
+                            <i class="fas fa-robot text-emerald-500 mt-1"></i>
+                            <span><strong>AI 分析：</strong> 主队过去 5 分钟射门 4 次，角球 2 个。客队体力耗尽，防线收缩。进球概率极高，建议重注。</span>
+                        </div>
+                    </div>
+
+                    <!-- 比赛卡片 2 -->
+                    <div class="bg-glass p-6 rounded-xl border-l-4 border-blue-500">
+                        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="text-xs font-bold text-gray-400">德甲 • 62'</span>
+                                    <span class="bg-blue-500/20 text-blue-500 text-[10px] px-1.5 py-0.5 rounded font-bold">价值注</span>
+                                </div>
+                                <div class="flex items-center gap-4 text-xl font-bold">
+                                    <span>拜仁慕尼黑</span>
+                                    <span class="px-3 py-1 bg-black/50 rounded text-white font-mono">0 - 1</span>
+                                    <span class="text-gray-400">奥格斯堡</span>
+                                </div>
+                            </div>
+                            <div class="w-full md:w-1/3">
+                                <div class="flex justify-between text-xs text-gray-400 mb-1">
+                                    <span>主队施压 (85%)</span>
+                                    <span>反击 (15%)</span>
+                                </div>
+                                <div class="h-2 bg-gray-700 rounded-full overflow-hidden">
+                                    <div class="h-full bg-blue-500 w-[85%]"></div>
+                                </div>
+                            </div>
+                            <div class="text-right min-w-[120px]">
+                                <div class="text-xs text-gray-500 mb-1">推荐盘口</div>
+                                <div class="text-lg font-bold text-white">主胜</div>
+                                <div class="text-xs text-gray-400">赔率 @ 1.80 (价值+15%)</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 锁定卡片 (诱导付费) -->
+                    <div class="bg-gray-900/50 p-6 rounded-xl border border-gray-800 flex items-center justify-center text-center relative overflow-hidden">
+                        <div class="absolute inset-0 backdrop-blur-sm z-10"></div>
+                        <div class="z-20 relative">
+                            <i class="fas fa-lock text-3xl text-gray-600 mb-2"></i>
+                            <h3 class="text-gray-400 font-bold">还有 14 场高价值比赛正在进行...</h3>
+                            <button onclick="switchTab('pricing')" class="mt-3 text-emerald-500 hover:text-emerald-400 text-sm font-bold underline">解锁完整数据</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- =========================================
+             3. 教程 (Guide)
+        ========================================== -->
+        <section id="guide" class="page-section">
+            <div class="max-w-4xl mx-auto px-6 py-12">
+                <h1 class="text-3xl font-bold mb-8 text-center">如何使用 OddsFlow 获利？</h1>
+                
+                <div class="space-y-8">
+                    <!-- 步骤 1 -->
+                    <div class="bg-glass p-8 rounded-2xl">
+                        <div class="text-emerald-500 font-bold text-xl mb-2">01. 看懂“压力条”</div>
+                        <p class="text-gray-300 mb-4">压力条（Pressure Bar）显示了当前的比赛局势。如果是 50/50，说明双方僵持，不要下注。</p>
+                        <div class="p-4 bg-black/50 rounded-lg border border-gray-700">
+                            <div class="mb-2 text-xs text-gray-400">例子：主队 90% 压力</div>
+                            <div class="h-4 bg-gray-700 rounded-full overflow-hidden mb-2">
+                                <div class="h-full bg-red-600 w-[90%]"></div>
+                            </div>
+                            <p class="text-sm text-white">👉 这种情况说明主队正在围攻，进球是迟早的事。这时候买“大球”或“主胜”胜率极高。</p>
+                        </div>
+                    </div>
+
+                    <!-- 步骤 2 -->
+                    <div class="bg-glass p-8 rounded-2xl">
+                        <div class="text-emerald-500 font-bold text-xl mb-2">02. 什么是“价值注” (Value Bet)？</div>
+                        <p class="text-gray-300">
+                            庄家也是人，也会犯错。当 AI 算出真实胜率是 60%（应赔 1.66），但庄家给出了 2.00 的赔率时，这就是价值注。<br><br>
+                            长期只投价值注，从数学上讲，你就是庄家。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- =========================================
+             4. 价格 (Pricing)
+        ========================================== -->
+        <section id="pricing" class="page-section">
+            <div class="max-w-5xl mx-auto px-6 py-20 text-center">
+                <h2 class="text-4xl font-bold mb-4">简单定价，百倍回报</h2>
+                <p class="text-gray-400 mb-12">每天只需一杯咖啡钱，获取专业机构级的数据。</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                    <!-- 免费版 -->
+                    <div class="bg-gray-900 border border-gray-800 p-8 rounded-3xl opacity-70 hover:opacity-100 transition">
+                        <h3 class="text-xl font-bold text-white mb-2">游客版</h3>
+                        <div class="text-4xl font-bold text-white mb-6">免费</div>
+                        <ul class="text-left space-y-4 mb-8 text-gray-400 text-sm">
+                            <li><i class="fas fa-check mr-2"></i> 只能查看 3 场比赛</li>
+                            <li><i class="fas fa-check mr-2"></i> 压力条有延迟</li>
+                            <li><i class="fas fa-times mr-2"></i> 无 AI 解读</li>
+                            <li><i class="fas fa-times mr-2"></i> 无 Telegram 推送</li>
+                        </ul>
+                        <a href="https://t.me/YourTelegramLink" class="block w-full py-3 border border-gray-600 rounded-xl font-bold hover:bg-gray-800 transition">加入体验群</a>
+                    </div>
+
+                    <!-- 专业版 -->
+                    <div class="bg-gradient-to-b from-gray-800 to-black border border-emerald-500 p-8 rounded-3xl relative transform md:scale-105 shadow-2xl shadow-emerald-900/50">
+                        <div class="absolute top-0 right-0 bg-emerald-500 text-black text-xs font-bold px-3 py-1 rounded-bl-lg">推荐</div>
+                        <h3 class="text-xl font-bold text-emerald-400 mb-2">PRO 操盘手</h3>
+                        <div class="text-5xl font-bold text-white mb-2">RM 68<span class="text-lg text-gray-500 font-normal">/月</span></div>
+                        <div class="text-xs text-gray-500 mb-6">或 RM 680/年 (省 2 个月)</div>
+                        
+                        <ul class="text-left space-y-4 mb-8 text-gray-300 text-sm">
+                            <li class="flex items-center"><i class="fas fa-check text-emerald-500 mr-3"></i> <strong>无限查看</strong> 所有实时比赛</li>
+                            <li class="flex items-center"><i class="fas fa-check text-emerald-500 mr-3"></i> <strong>0 延迟</strong> 毫秒级数据更新</li>
+                            <li class="flex items-center"><i class="fas fa-check text-emerald-500 mr-3"></i> <strong>Telegram 机器人</strong> 自动报警</li>
+                            <li class="flex items-center"><i class="fas fa-check text-emerald-500 mr-3"></i> <strong>绝杀信号</strong> 专属推送</li>
+                        </ul>
+                        <a href="https://t.me/YourTelegramLink" class="block w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold transition shadow-lg">
+                            立即订阅 (Telegram)
+                        </a>
+                        <p class="text-xs text-gray-500 mt-3">支持 TNG / USDT 支付</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- JavaScript 逻辑 (控制页面切换) -->
+    <script>
+        function switchTab(tabId) {
+            // 1. 隐藏所有板块
+            document.querySelectorAll('.page-section').forEach(el => {
+                el.classList.remove('active');
+                setTimeout(() => {
+                   if(!el.classList.contains('active')) el.style.display = 'none';
+                }, 300); // 等待动画
+            });
+
+            // 2. 显示目标板块
+            const target = document.getElementById(tabId);
+            target.style.display = 'block';
+            // 稍微延迟一点加 active class 以触发 opacity 动画
+            setTimeout(() => target.classList.add('active'), 10);
+
+            // 3. 更新导航按钮状态
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                if(btn.dataset.target === tabId) {
+                    btn.classList.add('text-white');
+                    btn.classList.remove('text-gray-400');
+                } else {
+                    btn.classList.remove('text-white');
+                    btn.classList.add('text-gray-400');
+                }
+            });
+        }
+
+        // 默认显示首页
+        // 如果想默认显示仪表盘，把下面改成 switchTab('dashboard');
+        switchTab('home');
+    </script>
+</body>
+</html>
