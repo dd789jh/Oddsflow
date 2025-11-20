@@ -1,379 +1,162 @@
 <!DOCTYPE html>
 <html lang="zh-CN" class="scroll-smooth">
 <head>
-<!-- 1. 针对 SEO 的深度优化 Meta -->
-    <meta name="keywords" content="OddsFlow, 足球大数据, 滚球分析软件, 价值注扫描, 赔率监控, N8N自动化, 足球AI预测, 英超分析, 亚盘策略">
-    <meta name="author" content="OddsFlow AI Labs">
-    <meta property="og:site_name" content="OddsFlow AI">
-    <meta property="og:type" content="website">
-    <meta property="og:locale" content="zh_CN">
-    
-    <!-- 2. 针对 GEO (AI搜索) 的结构化数据 (JSON-LD) -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "SoftwareApplication",
-      "name": "OddsFlow AI",
-      "applicationCategory": "SportsAnalyticsApplication",
-      "operatingSystem": "Web, Telegram",
-      "offers": {
-        "@type": "Offer",
-        "price": "68",
-        "priceCurrency": "MYR",
-        "availability": "https://schema.org/InStock"
-      },
-      "description": "OddsFlow AI 是全网首个利用 N8N 自动化引擎构建的实时足球赔率扫描仪。",
-      "featureList": "实时压力条, 赔率漏洞扫描, 绝杀预警, Telegram 自动推送",
-      "screenshot": "https://oddsflow.ai/dashboard-preview.jpg" 
-    }
-    </script>    <meta charset="UTF-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OddsFlow AI - 智能足球交易终端</title>
-    <meta name="description" content="OddsFlow AI 利用 N8N 自动化追踪实时赔率，识别价值注，捕捉绝杀信号。最专业的足球交易分析工具。">
+    <title>OddsFlow AI - Real-time Football Trading Intelligence</title>
     
-    <!-- 引入 Tailwind CSS (样式库) -->
+    <!-- SEO Meta (中英混合优化) -->
+    <meta name="description" content="OddsFlow AI tracks real-time football odds and pressure index. N8N automated scanner for value bets. 足球大数据分析，实时赔率监控工具。">
+    <meta name="keywords" content="OddsFlow, football odds scanner, value betting, asian handicap, 足球大数据, 滚球分析, 价值注, N8N自动化">
+    
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 引入 FontAwesome (图标库) -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <!-- 引入 Google Fonts (高级字体) -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     
     <style>
-        /* 全局样式设定 */
-        body { font-family: 'Inter', sans-serif; background-color: #0a0a0a; color: #e5e7eb; }
-        
-        /* 霓虹光效与渐变 */
+        body { font-family: 'Inter', sans-serif; background-color: #050505; color: #e5e7eb; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
         .text-gradient { background: linear-gradient(to right, #34d399, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .bg-glass { background: rgba(20, 20, 20, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
-        .glow-card:hover { box-shadow: 0 0 30px rgba(52, 211, 153, 0.15); border-color: rgba(52, 211, 153, 0.3); }
-        
-        /* 动画效果 */
-        @keyframes pulse-green {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(52, 211, 153, 0); }
-        }
+        .bg-glass { background: rgba(20, 20, 20, 0.6); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        .ticker-wrap { overflow: hidden; white-space: nowrap; }
+        .ticker-content { display: inline-block; animation: scroll 30s linear infinite; }
+        @keyframes pulse-green { 0%, 100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(52, 211, 153, 0); } }
         .live-dot { animation: pulse-green 2s infinite; }
-        
-        /* 隐藏滚动条 */
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        /* 页面切换控制 */
         .page-section { display: none; opacity: 0; transition: opacity 0.3s ease-in-out; }
         .page-section.active { display: block; opacity: 1; }
     </style>
 </head>
 <body class="antialiased h-screen flex flex-col overflow-hidden">
 
-    <!-- 顶部导航栏 (Top Bar) -->
-    <nav class="w-full h-16 border-b border-gray-800 bg-black/80 backdrop-blur-md flex items-center justify-between px-6 z-50 shrink-0">
-        <!-- Logo -->
-        <div class="flex items-center gap-2 cursor-pointer" onclick="switchTab('home')">
-            <div class="w-8 h-8 bg-gradient-to-br from-emerald-500 to-blue-600 rounded-lg flex items-center justify-center text-black font-bold">
-                <i class="fas fa-bolt"></i>
+    <!-- 1. 顶部跑马灯 (v3.0 新增) -->
+    <div class="bg-emerald-900/30 border-b border-emerald-500/20 h-8 flex items-center overflow-hidden shrink-0">
+        <div class="ticker-wrap">
+            <div class="ticker-content text-xs font-mono flex gap-8 text-emerald-400">
+                <span>🚀 SIGNAL: Man Utd vs Brentford [Pressure 92%]</span>
+                <span>💰 VALUE: Bayern Munich [Edge +15%]</span>
+                <span>🚨 ALERT: Real Madrid Late Goal Potential</span>
+                <span>📈 TREND: Over 2.5 Goals in Premier League hitting 70%</span>
+                <span>🤖 AI: Liverpool xG exceeding bookie odds</span>
+                <!-- Repeat -->
+                <span>🚀 SIGNAL: Man Utd vs Brentford [Pressure 92%]</span>
+                <span>💰 VALUE: Bayern Munich [Edge +15%]</span>
+                <span>🚨 ALERT: Real Madrid Late Goal Potential</span>
+                <span>📈 TREND: Over 2.5 Goals in Premier League hitting 70%</span>
+                <span>🤖 AI: Liverpool xG exceeding bookie odds</span>
             </div>
+        </div>
+    </div>
+
+    <!-- 2. 导航栏 -->
+    <nav class="w-full h-16 border-b border-gray-800 bg-black/80 backdrop-blur-md flex items-center justify-between px-6 z-50 shrink-0">
+        <div class="flex items-center gap-2 cursor-pointer" onclick="switchTab('home')">
+            <div class="w-8 h-8 bg-gradient-to-br from-emerald-500 to-blue-600 rounded-lg flex items-center justify-center text-black font-bold"><i class="fas fa-bolt"></i></div>
             <span class="font-bold text-xl tracking-tight text-white">OddsFlow<span class="text-emerald-500">.ai</span></span>
         </div>
-
-        <!-- 菜单 (桌面端) -->
         <div class="hidden md:flex items-center gap-8 text-sm font-medium text-gray-400">
-            <button onclick="switchTab('home')" class="hover:text-white transition nav-btn text-white" data-target="home">首页介绍</button>
-            <button onclick="switchTab('dashboard')" class="hover:text-white transition nav-btn" data-target="dashboard">
-                <i class="fas fa-chart-radar mr-1"></i> 交易终端
-            </button>
-            <button onclick="switchTab('guide')" class="hover:text-white transition nav-btn" data-target="guide">新手教程</button>
-            <button onclick="switchTab('pricing')" class="hover:text-white transition nav-btn" data-target="pricing">订阅价格</button>
+            <button onclick="switchTab('home')" class="hover:text-white transition nav-btn text-white" data-target="home" data-i18n="nav_home">首页</button>
+            <button onclick="switchTab('dashboard')" class="hover:text-white transition nav-btn" data-target="dashboard" data-i18n="nav_terminal">交易终端</button>
+            <button onclick="switchTab('guide')" class="hover:text-white transition nav-btn" data-target="guide" data-i18n="nav_guide">教程</button>
+            <button onclick="switchTab('pricing')" class="hover:text-white transition nav-btn" data-target="pricing" data-i18n="nav_pricing">价格</button>
         </div>
-
-        <!-- CTA 按钮 -->
-        <a href="href="https://t.me/OddsFlowChannel"" target="_blank" class="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2 rounded-full font-bold text-xs transition shadow-lg shadow-emerald-500/20 flex items-center gap-2">
-            <i class="fab fa-telegram-plane"></i> 加入电报群
-        </a>
+        <div class="flex items-center gap-4">
+            <button onclick="toggleLanguage()" class="text-xs font-bold border border-gray-700 rounded px-2 py-1 hover:bg-gray-800 transition"><span id="lang-display">EN / <span class="text-emerald-500">CN</span></span></button>
+            <a href="https://t.me/footballscbet_bot" target="_blank" class="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2 rounded-full font-bold text-xs transition shadow-lg shadow-emerald-500/20 flex items-center gap-2"><i class="fab fa-telegram-plane"></i> <span data-i18n="btn_telegram">加入电报群</span></a>
+        </div>
     </nav>
 
-    <!-- 主内容区域 (可滚动) -->
-    <main class="flex-1 overflow-y-auto no-scrollbar relative">
+    <!-- 主内容区域 -->
+    <main class="flex-1 overflow-y-auto relative" style="scrollbar-width: none; -ms-overflow-style: none;">
+        <style>main::-webkit-scrollbar { display: none; }</style>
         
-        <!-- =========================================
-             1. 首页 (Landing Page)
-        ========================================== -->
+        <!-- 首页 -->
         <section id="home" class="page-section active min-h-full">
             <div class="max-w-7xl mx-auto px-6 py-20 text-center">
-                <div class="inline-block px-4 py-1.5 rounded-full bg-emerald-900/30 border border-emerald-500/30 text-emerald-400 text-xs font-bold mb-8">
-                    🚀 全网首个 AI 驱动的足球交易扫描仪
-                </div>
-                <h1 class="text-5xl md:text-7xl font-black mb-6 leading-tight">
-                    别再盲目赌球。<br>
-                    <span class="text-gradient">开始像专家一样交易。</span>
-                </h1>
-                <p class="text-xl text-gray-400 max-w-2xl mx-auto mb-10">
-                    OddsFlow 实时监控全球 500+ 场比赛。当 <strong class="text-white">压力指数</strong> 爆表或 <strong class="text-white">赔率出现漏洞</strong> 时，AI 会在进球发生前 2 分钟通知你。
-                </p>
+                <div class="inline-block px-4 py-1.5 rounded-full bg-emerald-900/30 border border-emerald-500/30 text-emerald-400 text-xs font-bold mb-8" data-i18n="hero_badge">🚀 全网首个 AI 驱动的足球交易扫描仪</div>
+                <h1 class="text-5xl md:text-7xl font-black mb-6 leading-tight"><span data-i18n="hero_title_1">别再盲目赌球。</span><br><span class="text-gradient" data-i18n="hero_title_2">开始像专家一样交易。</span></h1>
+                <p class="text-xl text-gray-400 max-w-2xl mx-auto mb-10" data-i18n="hero_sub">OddsFlow 实时监控全球 500+ 场比赛。当压力指数爆表或赔率出现漏洞时，AI 会在进球发生前 2 分钟通知你。</p>
                 <div class="flex justify-center gap-4">
-                    <button onclick="switchTab('dashboard')" class="px-8 py-4 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition shadow-xl">
-                        进入演示终端
-                    </button>
-                    <button onclick="switchTab('guide')" class="px-8 py-4 bg-gray-800 text-white border border-gray-700 rounded-xl hover:bg-gray-700 transition font-bold">
-                        原理是什么？
-                    </button>
+                    <button onclick="switchTab('dashboard')" class="px-8 py-4 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition shadow-xl" data-i18n="btn_demo">进入演示终端</button>
+                    <button onclick="switchTab('guide')" class="px-8 py-4 bg-gray-800 text-white border border-gray-700 rounded-xl hover:bg-gray-700 transition font-bold" data-i18n="btn_how">原理是什么？</button>
                 </div>
-
-                <!-- 信任背书 (Features) -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-20 text-left">
-                    <div class="bg-glass p-6 rounded-2xl glow-card transition">
-                        <i class="fas fa-tachometer-alt text-3xl text-emerald-400 mb-4"></i>
-                        <h3 class="text-lg font-bold text-white mb-2">压力可视化</h3>
-                        <p class="text-sm text-gray-400">独家算法计算进攻动能。一眼看穿谁在“围攻”，谁在“苟延残喘”。</p>
-                    </div>
-                    <div class="bg-glass p-6 rounded-2xl glow-card transition">
-                        <i class="fas fa-search-dollar text-3xl text-blue-400 mb-4"></i>
-                        <h3 class="text-lg font-bold text-white mb-2">价值注挖掘</h3>
-                        <p class="text-sm text-gray-400">AI 对比真实 xG 与庄家赔率。发现被市场低估的赔率，实现长线盈利。</p>
-                    </div>
-                    <div class="bg-glass p-6 rounded-2xl glow-card transition">
-                        <i class="fas fa-robot text-3xl text-purple-400 mb-4"></i>
-                        <h3 class="text-lg font-bold text-white mb-2">24/7 自动监控</h3>
-                        <p class="text-sm text-gray-400">你不用盯着屏幕。N8N 自动化引擎全天候工作，机会出现直接推送到手机。</p>
-                    </div>
+                <!-- 统计条 -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-20 border-y border-gray-800 py-8">
+                    <div><div class="text-3xl font-bold text-white">500+</div><div class="text-xs text-gray-500 uppercase mt-1" data-i18n="stat_matches">每日扫描比赛</div></div>
+                    <div><div class="text-3xl font-bold text-emerald-400">~2s</div><div class="text-xs text-gray-500 uppercase mt-1" data-i18n="stat_latency">数据延迟</div></div>
+                    <div><div class="text-3xl font-bold text-blue-400">78%</div><div class="text-xs text-gray-500 uppercase mt-1" data-i18n="stat_accuracy">AI 准确率</div></div>
+                    <div><div class="text-3xl font-bold text-purple-400">24/7</div><div class="text-xs text-gray-500 uppercase mt-1" data-i18n="stat_uptime">自动化运行</div></div>
                 </div>
             </div>
         </section>
 
-        <!-- =========================================
-             2. 仪表盘 (Dashboard - The Product)
-        ========================================== -->
+        <!-- 仪表盘 -->
         <section id="dashboard" class="page-section">
             <div class="max-w-6xl mx-auto px-4 py-8">
                 <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold flex items-center gap-2">
-                        <span class="w-2.5 h-2.5 bg-red-500 rounded-full live-dot"></span>
-                        实时监控中心
-                    </h2>
-                    <div class="text-xs text-gray-500">数据源: BetsAPI (延迟 < 2s)</div>
+                    <h2 class="text-2xl font-bold flex items-center gap-2"><span class="w-2.5 h-2.5 bg-red-500 rounded-full live-dot"></span> <span data-i18n="dash_title">实时监控中心</span></h2>
+                    <div class="text-xs text-gray-500">Data Source: BetsAPI</div>
                 </div>
-
-                <!-- 模拟数据列表 -->
                 <div class="space-y-4" id="match-list">
-                    <!-- 比赛卡片 1 -->
-                    <div class="bg-glass p-6 rounded-xl border-l-4 border-red-500 relative overflow-hidden group">
+                    <div class="bg-glass p-6 rounded-xl border-l-4 border-red-500 relative overflow-hidden">
                         <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                            <!-- 比赛信息 -->
                             <div class="flex-1">
-                                <div class="flex items-center gap-2 mb-2">
-                                    <span class="text-xs font-bold text-gray-400">英超 • 86'</span>
-                                    <span class="bg-red-500/20 text-red-500 text-[10px] px-1.5 py-0.5 rounded font-bold">绝杀预警</span>
-                                </div>
-                                <div class="flex items-center gap-4 text-xl font-bold">
-                                    <span>曼联</span>
-                                    <span class="px-3 py-1 bg-black/50 rounded text-emerald-400 font-mono">1 - 1</span>
-                                    <span class="text-gray-400">布伦特福德</span>
-                                </div>
+                                <div class="flex items-center gap-2 mb-2"><span class="text-xs font-bold text-gray-400">PREMIER LEAGUE • 86'</span><span class="bg-red-500/20 text-red-500 text-[10px] px-1.5 py-0.5 rounded font-bold" data-i18n="badge_alert">绝杀预警</span></div>
+                                <div class="flex items-center gap-4 text-xl font-bold"><span>Man Utd</span><span class="px-3 py-1 bg-black/50 rounded text-emerald-400 font-mono">1 - 1</span><span class="text-gray-400">Brentford</span></div>
                             </div>
-                            
-                            <!-- 压力条 (核心视觉) -->
                             <div class="w-full md:w-1/3">
-                                <div class="flex justify-between text-xs text-gray-400 mb-1">
-                                    <span>主队施压 (92%)</span>
-                                    <span>反击 (8%)</span>
-                                </div>
-                                <div class="h-2 bg-gray-700 rounded-full overflow-hidden">
-                                    <div class="h-full bg-gradient-to-r from-red-500 to-red-600 w-[92%] relative">
-                                        <div class="absolute right-0 top-0 bottom-0 w-1 bg-white animate-ping"></div>
-                                    </div>
-                                </div>
+                                <div class="flex justify-between text-xs text-gray-400 mb-1"><span data-i18n="pressure_home">主队施压 (92%)</span><span data-i18n="pressure_away">反击 (8%)</span></div>
+                                <div class="h-2 bg-gray-700 rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r from-red-500 to-red-600 w-[92%] relative"><div class="absolute right-0 top-0 bottom-0 w-1 bg-white animate-ping"></div></div></div>
                             </div>
-
-                            <!-- 推荐操作 -->
                             <div class="text-right min-w-[120px]">
-                                <div class="text-xs text-gray-500 mb-1">推荐盘口</div>
-                                <div class="text-lg font-bold text-emerald-400">大球 2.5</div>
-                                <div class="text-xs text-gray-400">赔率 @ 1.95</div>
+                                <div class="text-xs text-gray-500 mb-1" data-i18n="rec_market">推荐盘口</div><div class="text-lg font-bold text-emerald-400">Over 2.5</div><div class="text-xs text-gray-400">@ 1.95</div>
                             </div>
                         </div>
-                        
-                        <!-- AI 解读 (Hover显示) -->
                         <div class="mt-4 pt-4 border-t border-white/5 text-sm text-gray-300 flex gap-2 items-start">
-                            <i class="fas fa-robot text-emerald-500 mt-1"></i>
-                            <span><strong>AI 分析：</strong> 主队过去 5 分钟射门 4 次，角球 2 个。客队体力耗尽，防线收缩。进球概率极高，建议重注。</span>
+                            <i class="fas fa-robot text-emerald-500 mt-1"></i><span><strong data-i18n="ai_label">AI 分析：</strong> <span data-i18n="ai_text">主队过去 5 分钟射门 4 次，角球 2 个。客队体力耗尽。进球概率极高。</span></span>
                         </div>
                     </div>
-
-                    <!-- 比赛卡片 2 -->
-                    <div class="bg-glass p-6 rounded-xl border-l-4 border-blue-500">
-                        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                            <div class="flex-1">
-                                <div class="flex items-center gap-2 mb-2">
-                                    <span class="text-xs font-bold text-gray-400">德甲 • 62'</span>
-                                    <span class="bg-blue-500/20 text-blue-500 text-[10px] px-1.5 py-0.5 rounded font-bold">价值注</span>
-                                </div>
-                                <div class="flex items-center gap-4 text-xl font-bold">
-                                    <span>拜仁慕尼黑</span>
-                                    <span class="px-3 py-1 bg-black/50 rounded text-white font-mono">0 - 1</span>
-                                    <span class="text-gray-400">奥格斯堡</span>
-                                </div>
-                            </div>
-                            <div class="w-full md:w-1/3">
-                                <div class="flex justify-between text-xs text-gray-400 mb-1">
-                                    <span>主队施压 (85%)</span>
-                                    <span>反击 (15%)</span>
-                                </div>
-                                <div class="h-2 bg-gray-700 rounded-full overflow-hidden">
-                                    <div class="h-full bg-blue-500 w-[85%]"></div>
-                                </div>
-                            </div>
-                            <div class="text-right min-w-[120px]">
-                                <div class="text-xs text-gray-500 mb-1">推荐盘口</div>
-                                <div class="text-lg font-bold text-white">主胜</div>
-                                <div class="text-xs text-gray-400">赔率 @ 1.80 (价值+15%)</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- 锁定卡片 (诱导付费) -->
                     <div class="bg-gray-900/50 p-6 rounded-xl border border-gray-800 flex items-center justify-center text-center relative overflow-hidden">
                         <div class="absolute inset-0 backdrop-blur-sm z-10"></div>
-                        <div class="z-20 relative">
-                            <i class="fas fa-lock text-3xl text-gray-600 mb-2"></i>
-                            <h3 class="text-gray-400 font-bold">还有 14 场高价值比赛正在进行...</h3>
-                            <button onclick="switchTab('pricing')" class="mt-3 text-emerald-500 hover:text-emerald-400 text-sm font-bold underline">解锁完整数据</button>
-                        </div>
+                        <div class="z-20 relative"><i class="fas fa-lock text-3xl text-gray-600 mb-2"></i><h3 class="text-gray-400 font-bold" data-i18n="lock_text">还有 14 场高价值比赛正在进行...</h3><button onclick="switchTab('pricing')" class="mt-3 text-emerald-500 hover:text-emerald-400 text-sm font-bold underline" data-i18n="lock_btn">解锁完整数据</button></div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- =========================================
-             3. 教程 (Guide)
-        ========================================== -->
+        <!-- 教程 -->
         <section id="guide" class="page-section">
             <div class="max-w-4xl mx-auto px-6 py-12">
-                <h1 class="text-3xl font-bold mb-8 text-center">如何使用 OddsFlow 获利？</h1>
-                
-                <div class="space-y-8">
-                    <!-- 步骤 1 -->
-                    <div class="bg-glass p-8 rounded-2xl">
-                        <div class="text-emerald-500 font-bold text-xl mb-2">01. 看懂“压力条”</div>
-                        <p class="text-gray-300 mb-4">压力条（Pressure Bar）显示了当前的比赛局势。如果是 50/50，说明双方僵持，不要下注。</p>
-                        <div class="p-4 bg-black/50 rounded-lg border border-gray-700">
-                            <div class="mb-2 text-xs text-gray-400">例子：主队 90% 压力</div>
-                            <div class="h-4 bg-gray-700 rounded-full overflow-hidden mb-2">
-                                <div class="h-full bg-red-600 w-[90%]"></div>
-                            </div>
-                            <p class="text-sm text-white">👉 这种情况说明主队正在围攻，进球是迟早的事。这时候买“大球”或“主胜”胜率极高。</p>
-                        </div>
-                    </div>
+                <h1 class="text-3xl font-bold mb-8 text-center" data-i18n="guide_title">如何使用 OddsFlow 获利？</h1>
+                <div class="bg-glass p-8 rounded-2xl mb-6"><div class="text-emerald-500 font-bold text-xl mb-2" data-i18n="guide_1_title">01. 看懂“压力条”</div><p class="text-gray-300" data-i18n="guide_1_text">压力条显示了当前的比赛局势。如果主队压力 > 80%，说明正在围攻，买入“大球”或“主胜”胜率极高。</p></div>
+                <div class="bg-glass p-8 rounded-2xl"><div class="text-emerald-500 font-bold text-xl mb-2" data-i18n="guide_2_title">02. 什么是“价值注”？</div><p class="text-gray-300" data-i18n="guide_2_text">当 AI 算出的真实胜率高于庄家赔率暗示的胜率时，就是价值注。长期跟投价值注，从数学上讲，你就是庄家。</p></div>
+            </div>
+        </section>
 
-                    <!-- 步骤 2 -->
-                    <div class="bg-glass p-8 rounded-2xl">
-                        <div class="text-emerald-500 font-bold text-xl mb-2">02. 什么是“价值注” (Value Bet)？</div>
-                        <p class="text-gray-300">
-                            庄家也是人，也会犯错。当 AI 算出真实胜率是 60%（应赔 1.66），但庄家给出了 2.00 的赔率时，这就是价值注。<br><br>
-                            长期只投价值注，从数学上讲，你就是庄家。
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </section>
-<!-- 3.5 常见问题 (FAQ) -->
-        <section class="page-section active">
-            <div class="max-w-4xl mx-auto px-6 py-10">
-                <div class="text-center mb-10"><h2 class="text-3xl font-bold mb-4">常见疑问</h2><p class="text-gray-400">我们不承诺 100% 胜率，我们只承诺 100% 真实的数据。</p></div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="bg-gray-900/50 p-6 rounded-xl border border-gray-800"><h3 class="text-emerald-400 font-bold mb-2">Q: 这个软件能保证必赢吗？</h3><p class="text-sm text-gray-400">不能。任何承诺“必赢”的都是骗子。OddsFlow 是一个<strong>辅助决策工具</strong>，它能极大提高你的胜率，而非运气。</p></div>
-                    <div class="bg-gray-900/50 p-6 rounded-xl border border-gray-800"><h3 class="text-emerald-400 font-bold mb-2">Q: 我是小白，看不懂数据怎么办？</h3><p class="text-sm text-gray-400">不用担心。PRO 版会员会收到<strong>AI 解读版</strong>的信号。机器人会直接告诉你：“主队正在围攻，建议关注大球”。你只需要跟着信号操作即可。</p></div>
-                    <div class="bg-gray-900/50 p-6 rounded-xl border border-gray-800"><h3 class="text-emerald-400 font-bold mb-2">Q: N8N 自动化是什么意思？</h3><p class="text-sm text-gray-400">这意味着没有人工干预。我们的服务器每秒钟扫描全球 500+ 场比赛。比人工盯着看快得多。</p></div>
-                    <div class="bg-gray-900/50 p-6 rounded-xl border border-gray-800"><h3 class="text-emerald-400 font-bold mb-2">Q: 怎么支付？</h3><p class="text-sm text-gray-400">目前通过 Telegram 人工客服开通，支持 TNG 或 USDT。</p></div>
-                </div>
-            </div>
-        </section><!-- 3.5 常见问题 (FAQ) -->
-        <section class="page-section active">
-            <div class="max-w-4xl mx-auto px-6 py-10">
-                <div class="text-center mb-10"><h2 class="text-3xl font-bold mb-4">常见疑问</h2><p class="text-gray-400">我们不承诺 100% 胜率，我们只承诺 100% 真实的数据。</p></div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="bg-gray-900/50 p-6 rounded-xl border border-gray-800"><h3 class="text-emerald-400 font-bold mb-2">Q: 这个软件能保证必赢吗？</h3><p class="text-sm text-gray-400">不能。任何承诺“必赢”的都是骗子。OddsFlow 是一个<strong>辅助决策工具</strong>，它能极大提高你的胜率，而非运气。</p></div>
-                    <div class="bg-gray-900/50 p-6 rounded-xl border border-gray-800"><h3 class="text-emerald-400 font-bold mb-2">Q: 我是小白，看不懂数据怎么办？</h3><p class="text-sm text-gray-400">不用担心。PRO 版会员会收到<strong>AI 解读版</strong>的信号。机器人会直接告诉你：“主队正在围攻，建议关注大球”。你只需要跟着信号操作即可。</p></div>
-                    <div class="bg-gray-900/50 p-6 rounded-xl border border-gray-800"><h3 class="text-emerald-400 font-bold mb-2">Q: N8N 自动化是什么意思？</h3><p class="text-sm text-gray-400">这意味着没有人工干预。我们的服务器每秒钟扫描全球 500+ 场比赛。比人工盯着看快得多。</p></div>
-                    <div class="bg-gray-900/50 p-6 rounded-xl border border-gray-800"><h3 class="text-emerald-400 font-bold mb-2">Q: 怎么支付？</h3><p class="text-sm text-gray-400">目前通过 Telegram 人工客服开通，支持 TNG 或 USDT。</p></div>
-                </div>
-            </div>
-        </section>
-        <!-- =========================================
-             4. 价格 (Pricing)
-        ========================================== -->
-        
+        <!-- 价格 -->
         <section id="pricing" class="page-section">
             <div class="max-w-5xl mx-auto px-6 py-20 text-center">
-                <h2 class="text-4xl font-bold mb-4">简单定价，百倍回报</h2>
-                <p class="text-gray-400 mb-12">每天只需一杯咖啡钱，获取专业机构级的数据。</p>
-
+                <h2 class="text-4xl font-bold mb-4" data-i18n="price_title">简单定价，百倍回报</h2>
+                <p class="text-gray-400 mb-12" data-i18n="price_sub">每天只需一杯咖啡钱，获取专业机构级的数据。</p>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-                    <!-- 免费版 -->
-                    <div class="bg-gray-900 border border-gray-800 p-8 rounded-3xl opacity-70 hover:opacity-100 transition">
-                        <h3 class="text-xl font-bold text-white mb-2">游客版</h3>
-                        <div class="text-4xl font-bold text-white mb-6">免费</div>
-                        <ul class="text-left space-y-4 mb-8 text-gray-400 text-sm">
-                            <li><i class="fas fa-check mr-2"></i> 只能查看 3 场比赛</li>
-                            <li><i class="fas fa-check mr-2"></i> 压力条有延迟</li>
-                            <li><i class="fas fa-times mr-2"></i> 无 AI 解读</li>
-                            <li><i class="fas fa-times mr-2"></i> 无 Telegram 推送</li>
-                        </ul>
-                        <a href="href="https://t.me/OddsFlowChannel"" class="block w-full py-3 border border-gray-600 rounded-xl font-bold hover:bg-gray-800 transition">加入体验群</a>
-                    </div>
-
-                    <!-- 专业版 -->
-                    <div class="bg-gradient-to-b from-gray-800 to-black border border-emerald-500 p-8 rounded-3xl relative transform md:scale-105 shadow-2xl shadow-emerald-900/50">
-                        <div class="absolute top-0 right-0 bg-emerald-500 text-black text-xs font-bold px-3 py-1 rounded-bl-lg">推荐</div>
-                        <h3 class="text-xl font-bold text-emerald-400 mb-2">PRO 操盘手</h3>
-                        <div class="text-5xl font-bold text-white mb-2">RM 68<span class="text-lg text-gray-500 font-normal">/月</span></div>
-                        <div class="text-xs text-gray-500 mb-6">或 RM 680/年 (省 2 个月)</div>
-                        
-                        <ul class="text-left space-y-4 mb-8 text-gray-300 text-sm">
-                            <li class="flex items-center"><i class="fas fa-check text-emerald-500 mr-3"></i> <strong>无限查看</strong> 所有实时比赛</li>
-                            <li class="flex items-center"><i class="fas fa-check text-emerald-500 mr-3"></i> <strong>0 延迟</strong> 毫秒级数据更新</li>
-                            <li class="flex items-center"><i class="fas fa-check text-emerald-500 mr-3"></i> <strong>Telegram 机器人</strong> 自动报警</li>
-                            <li class="flex items-center"><i class="fas fa-check text-emerald-500 mr-3"></i> <strong>绝杀信号</strong> 专属推送</li>
-                        </ul>
-                        <a href="https://t.me/footballscbet_bot" class="block w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold transition shadow-lg">
-                            立即订阅 (Telegram)
-                        </a>
-                        <p class="text-xs text-gray-500 mt-3">支持 TNG / USDT 支付</p>
-                    </div>
+                    <div class="bg-gray-900 border border-gray-800 p-8 rounded-3xl opacity-70"><h3 class="text-xl font-bold text-white mb-2" data-i18n="plan_free">游客版</h3><div class="text-4xl font-bold text-white mb-6">Free</div><a href="https://t.me/footballscbet_bot" class="block w-full py-3 border border-gray-600 rounded-xl font-bold hover:bg-gray-800 transition" data-i18n="btn_join_free">加入体验群</a></div>
+                    <div class="bg-gradient-to-b from-gray-800 to-black border border-emerald-500 p-8 rounded-3xl relative transform md:scale-105 shadow-2xl"><div class="absolute top-0 right-0 bg-emerald-500 text-black text-xs font-bold px-3 py-1 rounded-bl-lg">PRO</div><h3 class="text-xl font-bold text-emerald-400 mb-2" data-i18n="plan_pro">PRO 操盘手</h3><div class="text-5xl font-bold text-white mb-2">RM 68<span class="text-lg text-gray-500 font-normal">/mo</span></div><a href="https://t.me/footballscbet_bot" class="block w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold transition shadow-lg" data-i18n="btn_sub_pro">立即订阅 (Telegram)</a></div>
+                </div>
+                <!-- 用户评价 -->
+                <div class="mt-20 grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+                    <div class="bg-gray-900/50 p-4 rounded-xl border border-gray-800"><div class="flex text-yellow-500 text-xs mb-2"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div><p class="text-xs text-gray-400 mb-2">"Previously I lost blindly. Since using OddsFlow pressure gauge, my win rate increased to 70%."</p><div class="text-xs font-bold text-white">- Jason L. (Malaysia)</div></div>
+                    <div class="bg-gray-900/50 p-4 rounded-xl border border-gray-800"><div class="flex text-yellow-500 text-xs mb-2"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div><p class="text-xs text-gray-400 mb-2">"The late goal alert is insane. Caught 3 winners last night in stoppage time."</p><div class="text-xs font-bold text-white">- David K. (UK)</div></div>
+                    <div class="bg-gray-900/50 p-4 rounded-xl border border-gray-800"><div class="flex text-yellow-500 text-xs mb-2"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div><p class="text-xs text-gray-400 mb-2">"N8N automation is fast. I get the telegram msg before bet365 updates odds."</p><div class="text-xs font-bold text-white">- Alex T. (Singapore)</div></div>
                 </div>
             </div>
         </section>
     </main>
 
-    <!-- JavaScript 逻辑 (控制页面切换) -->
     <script>
-        function switchTab(tabId) {
-            // 1. 隐藏所有板块
-            document.querySelectorAll('.page-section').forEach(el => {
-                el.classList.remove('active');
-                setTimeout(() => {
-                   if(!el.classList.contains('active')) el.style.display = 'none';
-                }, 300); // 等待动画
-            });
-
-            // 2. 显示目标板块
-            const target = document.getElementById(tabId);
-            target.style.display = 'block';
-            // 稍微延迟一点加 active class 以触发 opacity 动画
-            setTimeout(() => target.classList.add('active'), 10);
-
-            // 3. 更新导航按钮状态
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                if(btn.dataset.target === tabId) {
-                    btn.classList.add('text-white');
-                    btn.classList.remove('text-gray-400');
-                } else {
-                    btn.classList.remove('text-white');
-                    btn.classList.add('text-gray-400');
-                }
-            });
-        }
-
-        // 默认显示首页
-        // 如果想默认显示仪表盘，把下面改成 switchTab('dashboard');
+        const translations={zh:{nav_home:"首页",nav_terminal:"交易终端",nav_guide:"教程",nav_pricing:"价格",btn_telegram:"加入电报群",hero_badge:"🚀 全网首个 AI 驱动的足球交易扫描仪",hero_title_1:"别再盲目赌球。",hero_title_2:"开始像专家一样交易。",hero_sub:"OddsFlow 实时监控全球 500+ 场比赛。当压力指数爆表或赔率出现漏洞时，AI 会在进球发生前 2 分钟通知你。",btn_demo:"进入演示终端",btn_how:"原理是什么？",stat_matches:"每日扫描比赛",stat_latency:"数据延迟",stat_accuracy:"AI 准确率",stat_uptime:"自动化运行",dash_title:"实时监控中心",badge_alert:"绝杀预警",pressure_home:"主队施压 (92%)",pressure_away:"反击 (8%)",rec_market:"推荐盘口",ai_label:"AI 分析：",ai_text:"主队过去 5 分钟射门 4 次，角球 2 个。客队体力耗尽。进球概率极高。",lock_text:"还有 14 场高价值比赛正在进行...",lock_btn:"解锁完整数据",guide_title:"如何使用 OddsFlow 获利？",guide_1_title:"01. 看懂“压力条”",guide_1_text:"压力条显示了当前的比赛局势。如果主队压力 > 80%，说明正在围攻，买入“大球”或“主胜”胜率极高。",guide_2_title:"02. 什么是“价值注”？",guide_2_text:"当 AI 算出的真实胜率高于庄家赔率暗示的胜率时，就是价值注。长期跟投价值注，从数学上讲，你就是庄家。",price_title:"简单定价，百倍回报",price_sub:"每天只需一杯咖啡钱，获取专业机构级的数据。",plan_free:"游客版",btn_join_free:"加入体验群",plan_pro:"PRO 操盘手",btn_sub_pro:"立即订阅 (Telegram)"},en:{nav_home:"Home",nav_terminal:"Terminal",nav_guide:"Guide",nav_pricing:"Pricing",btn_telegram:"Join Telegram",hero_badge:"🚀 The #1 AI-Powered Football Trading Scanner",hero_title_1:"Stop Gambling Blindly.",hero_title_2:"Start Trading Like a Pro.",hero_sub:"OddsFlow tracks 500+ matches daily. When Pressure Index peaks or odds drop, AI alerts you 2 minutes before the goal happens.",btn_demo:"Launch Terminal",btn_how:"How it Works?",stat_matches:"Daily Matches",stat_latency:"Data Latency",stat_accuracy:"AI Accuracy",stat_uptime:"System Uptime",dash_title:"Live Monitor",badge_alert:"GOAL ALERT",pressure_home:"Home Pressure (92%)",pressure_away:"Counter (8%)",rec_market:"Market",ai_label:"AI Insight:",ai_text:"Home team 4 shots in last 5 mins. Away team exhausted. Goal probability is critical.",lock_text:"14 more high-value matches in progress...",lock_btn:"Unlock Full Data",guide_title:"How to Profit with OddsFlow?",guide_1_title:"01. The Pressure Gauge",guide_1_text:"Visualizes momentum. If Home Pressure > 80%, they are sieging. High probability for Over Goals or Home Win.",guide_2_title:"02. What is Value Bet?",guide_2_text:"When AI probability is higher than Bookie implied probability. Mathematically, you become the House in the long run.",price_title:"Simple Price. Huge ROI.",price_sub:"Professional institutional data for the price of a coffee.",plan_free:"Guest",btn_join_free:"Join Free Group",plan_pro:"PRO Trader",btn_sub_pro:"Subscribe Now (Telegram)"}};
+        let currentLang='zh';
+        function toggleLanguage(){currentLang=currentLang==='zh'?'en':'zh';document.getElementById('lang-display').innerHTML=currentLang==='zh'?'EN / <span class="text-emerald-500">CN</span>':'<span class="text-emerald-500">EN</span> / CN';document.querySelectorAll('[data-i18n]').forEach(el=>{const key=el.getAttribute('data-i18n');if(translations[currentLang][key]){el.innerText=translations[currentLang][key];}});}
+        function switchTab(tabId){document.querySelectorAll('.page-section').forEach(el=>{el.classList.remove('active');setTimeout(()=>{if(!el.classList.contains('active'))el.style.display='none';},300);});const target=document.getElementById(tabId);target.style.display='block';setTimeout(()=>target.classList.add('active'),10);document.querySelectorAll('.nav-btn').forEach(btn=>{if(btn.dataset.target===tabId){btn.classList.add('text-white');btn.classList.remove('text-gray-400');}else{btn.classList.remove('text-white');btn.classList.add('text-gray-400');}});}
         switchTab('home');
     </script>
 </body>
