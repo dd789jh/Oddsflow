@@ -24,19 +24,19 @@
         .ticker-wrap { overflow: hidden; white-space: nowrap; }
         .ticker-content { display: inline-block; animation: scroll 30s linear infinite; }
         
-        /* 状态色 */
-        .form-w { background: #10b981; color: black; } 
-        .form-d { background: #6b7280; color: white; } 
-        .form-l { background: #ef4444; color: white; }
+        /* 悬浮动画 */
+        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-20px); } }
+        .animate-float { animation: float 6s ease-in-out infinite; }
+        .animate-float-delay { animation: float 7s ease-in-out infinite 1s; }
         
         .page-section { display: none; opacity: 0; transition: opacity 0.3s ease-in-out; }
         .page-section.active { display: block; opacity: 1; }
     </style>
 </head>
-<body class="antialiased h-screen flex flex-col overflow-hidden">
+<body class="antialiased h-screen flex flex-col overflow-hidden selection:bg-emerald-500 selection:text-black">
 
     <!-- 1. 跑马灯 -->
-    <div class="bg-emerald-900/30 border-b border-emerald-500/20 h-8 flex items-center overflow-hidden shrink-0">
+    <div class="bg-emerald-900/30 border-b border-emerald-500/20 h-8 flex items-center overflow-hidden shrink-0 z-50 relative">
         <div class="ticker-wrap">
             <div class="ticker-content text-xs font-mono flex gap-8 text-emerald-400">
                 <span>🚀 SIGNAL: Live Pressure Spike Detected</span>
@@ -52,9 +52,9 @@
     </div>
 
     <!-- 2. 导航栏 -->
-    <nav class="w-full h-16 border-b border-gray-800 bg-black/80 backdrop-blur-md flex items-center justify-between px-6 z-50 shrink-0">
+    <nav class="w-full h-16 border-b border-gray-800 bg-black/80 backdrop-blur-md flex items-center justify-between px-6 z-50 shrink-0 relative">
         <div class="flex items-center gap-2 cursor-pointer" onclick="location.reload()">
-            <div class="w-8 h-8 bg-gradient-to-br from-emerald-500 to-blue-600 rounded-lg flex items-center justify-center text-black font-bold"><i class="fas fa-bolt"></i></div>
+            <div class="w-8 h-8 bg-gradient-to-br from-emerald-500 to-blue-600 rounded-lg flex items-center justify-center text-black font-bold shadow-lg shadow-emerald-500/20"><i class="fas fa-bolt"></i></div>
             <span class="font-bold text-xl tracking-tight text-white">OddsFlow<span class="text-emerald-500">.ai</span></span>
         </div>
         <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-400">
@@ -65,28 +65,79 @@
             <button onclick="switchTab('pricing')" class="hover:text-white transition nav-btn" data-target="pricing">价格</button>
         </div>
         <div class="flex items-center gap-4">
-            <a href="https://t.me/footballscbet_bot" target="_blank" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-full font-bold text-xs transition shadow-lg shadow-emerald-500/20 flex items-center gap-2"><i class="fab fa-telegram-plane"></i> 加入电报群</a>
+            <a href="https://t.me/footballscbet_bot" target="_blank" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-full font-bold text-xs transition shadow-lg shadow-emerald-500/20 flex items-center gap-2 hover:scale-105 transform duration-200"><i class="fab fa-telegram-plane"></i> 加入电报群</a>
         </div>
     </nav>
 
     <!-- 主内容 -->
-    <main class="flex-1 overflow-y-auto p-4 pb-20" id="main-content">
+    <main class="flex-1 overflow-y-auto relative" id="main-content">
         
-        <!-- 首页 -->
-        <section id="home" class="page-section active min-h-full">
-            <div class="max-w-7xl mx-auto px-6 py-20 text-center">
-                <div class="inline-block px-4 py-1.5 rounded-full bg-emerald-900/30 border border-emerald-500/30 text-emerald-400 text-xs font-bold mb-8">🚀 全网首个 AI 驱动的足球交易扫描仪</div>
+        <!-- 首页 (视觉重构版) -->
+        <section id="home" class="page-section active min-h-full relative overflow-hidden">
+            <!-- 背景光效 -->
+            <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none"></div>
+            <div class="absolute bottom-0 right-0 w-[600px] h-[400px] bg-blue-600/10 rounded-full blur-[100px] pointer-events-none"></div>
+
+            <div class="max-w-7xl mx-auto px-6 py-16 relative z-10">
                 
-                <!-- 🔥 修复重点：强制渐变色 -->
-                <h1 class="text-5xl md:text-7xl font-black mb-6 leading-tight">
-                    别再盲目入场。<br>
-                    <span class="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-blue-500">开始像专家一样交易。</span>
-                </h1>
-                
-                <p class="text-xl text-gray-400 max-w-2xl mx-auto mb-10">OddsFlow 实时监控全球 500+ 场比赛。当压力指数爆表或赔率出现漏洞时，AI 会在进球发生前 2 分钟通知你。</p>
-                <div class="flex justify-center gap-4">
-                    <button onclick="switchTab('dashboard')" class="px-8 py-4 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition shadow-xl">进入实时终端</button>
-                    <button onclick="switchTab('epl')" class="px-8 py-4 bg-purple-900/50 text-white border border-purple-500/50 rounded-xl hover:bg-purple-800 transition font-bold">查看英超数据</button>
+                <!-- 左右悬浮卡片 (仅桌面显示) -->
+                <div class="hidden lg:block absolute top-20 left-10 animate-float">
+                    <div class="bg-glass p-4 rounded-xl border-l-4 border-emerald-500 w-64 shadow-2xl">
+                        <div class="flex justify-between text-xs text-gray-400 mb-2"><span>Live Signal</span><span class="text-emerald-400">Just Now</span></div>
+                        <div class="font-bold text-white mb-1">Man Utd vs Chelsea</div>
+                        <div class="text-xs text-gray-500">Pressure Gauge: <span class="text-red-500 font-bold">CRITICAL (92%)</span></div>
+                    </div>
+                </div>
+                <div class="hidden lg:block absolute top-40 right-10 animate-float-delay">
+                    <div class="bg-glass p-4 rounded-xl border-l-4 border-blue-500 w-64 shadow-2xl">
+                        <div class="flex justify-between text-xs text-gray-400 mb-2"><span>Value Bet</span><span class="text-blue-400">+15% Edge</span></div>
+                        <div class="font-bold text-white mb-1">Real Madrid Win</div>
+                        <div class="text-xs text-gray-500">AI Confidence: <span class="text-white font-bold">High</span></div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-10">
+                    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-900/30 border border-emerald-500/30 text-emerald-400 text-xs font-bold mb-8 hover:bg-emerald-900/50 transition cursor-default">
+                        <i class="fas fa-robot"></i> 全网首个 N8N 驱动的交易扫描仪
+                    </div>
+                    
+                    <h1 class="text-5xl md:text-8xl font-black mb-6 leading-tight tracking-tight">
+                        别再盲目<span class="text-gray-600 line-through decoration-red-500">赌球</span>。<br>
+                        <span class="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-teal-300 to-blue-500">像专家一样交易。</span>
+                    </h1>
+                    
+                    <p class="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-12 leading-relaxed">
+                        OddsFlow 实时监控全球 <span class="text-white font-bold">500+</span> 场比赛。当 <span class="text-emerald-400">压力指数</span> 爆表或 <span class="text-blue-400">赔率漏洞</span> 出现时，AI 会在进球前 2 分钟通知你。
+                    </p>
+                    
+                    <div class="flex flex-col sm:flex-row justify-center gap-4">
+                        <button onclick="switchTab('dashboard')" class="group px-8 py-4 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition shadow-[0_0_30px_rgba(255,255,255,0.3)] flex items-center justify-center gap-2">
+                            <i class="fas fa-chart-line text-lg group-hover:scale-110 transition"></i> 进入实时终端
+                        </button>
+                        <button onclick="switchTab('epl')" class="group px-8 py-4 bg-[#1a1a1a] text-white border border-gray-700 rounded-xl hover:border-purple-500 hover:text-purple-400 transition font-bold flex items-center justify-center gap-2">
+                            <i class="fas fa-shield-alt group-hover:rotate-12 transition"></i> 查看英超数据
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 数据统计栏 (更有质感) -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-24 border-t border-white/5 pt-12">
+                    <div class="text-center">
+                        <div class="text-3xl font-black text-white mb-1">500+</div>
+                        <div class="text-xs text-gray-500 uppercase tracking-widest">Matches Daily</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-black text-emerald-400 mb-1">~2s</div>
+                        <div class="text-xs text-gray-500 uppercase tracking-widest">Data Latency</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-black text-blue-400 mb-1">78%</div>
+                        <div class="text-xs text-gray-500 uppercase tracking-widest">AI Accuracy</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-black text-purple-400 mb-1">24/7</div>
+                        <div class="text-xs text-gray-500 uppercase tracking-widest">Automated</div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -94,7 +145,7 @@
         <!-- 实时终端 (Dashboard) -->
         <section id="dashboard" class="page-section">
             <div class="text-center py-8">
-                <h1 class="text-2xl font-bold mb-2">实时监控终端 (Live)</h1>
+                <h1 class="text-2xl font-bold mb-2 flex justify-center items-center gap-2"><i class="fas fa-satellite-dish text-emerald-500"></i> 实时监控终端</h1>
                 <p class="text-xs text-gray-500">点击卡片查看深度分析</p>
             </div>
             <div class="max-w-3xl mx-auto space-y-4" id="match-container">
@@ -105,7 +156,7 @@
         <!-- 英超前瞻 (EPL) -->
         <section id="epl" class="page-section">
             <div class="text-center py-8">
-                <h1 class="text-2xl font-bold mb-2 text-purple-400">英超赛事前瞻</h1>
+                <h1 class="text-2xl font-bold mb-2 text-purple-400 flex justify-center items-center gap-2"><i class="fas fa-shield-alt"></i> 英超赛事前瞻</h1>
                 <p class="text-xs text-gray-500">Upcoming Premier League Analysis</p>
             </div>
             <div class="max-w-3xl mx-auto grid gap-4" id="epl-container">
@@ -115,19 +166,35 @@
 
         <!-- 教程 -->
         <section id="guide" class="page-section">
-            <div class="max-w-4xl mx-auto px-6 py-12 text-center">
-                <h1 class="text-3xl font-bold mb-8">如何获利？</h1>
-                <p class="text-gray-400">关注压力条 > 80% 的比赛，结合 AI 建议入场。</p>
+            <div class="max-w-4xl mx-auto px-6 py-12">
+                <h1 class="text-3xl font-bold mb-8 text-center"><i class="fas fa-book-open text-blue-500 mr-2"></i>如何获利？</h1>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-glass p-8 rounded-2xl border-t-4 border-emerald-500">
+                        <div class="text-emerald-500 font-bold text-xl mb-4"><i class="fas fa-tachometer-alt mr-2"></i>看懂“压力条”</div>
+                        <p class="text-gray-300 leading-relaxed text-sm">压力条显示了当前的比赛局势。如果主队压力 <b class="text-white">> 80%</b>，说明正在围攻。这时候买入“大球”或“主胜”，胜率极高。</p>
+                    </div>
+                    <div class="bg-glass p-8 rounded-2xl border-t-4 border-blue-500">
+                        <div class="text-blue-500 font-bold text-xl mb-4"><i class="fas fa-search-dollar mr-2"></i>什么是“价值注”？</div>
+                        <p class="text-gray-300 leading-relaxed text-sm">当 AI 算出的真实胜率（例如 60%）高于庄家赔率暗示的胜率（例如 50%）时，这就是价值注。长期跟投，你就是庄家。</p>
+                    </div>
+                </div>
             </div>
         </section>
         
+        <!-- 价格 -->
         <section id="pricing" class="page-section">
             <div class="max-w-4xl mx-auto px-6 py-12 text-center">
                 <h1 class="text-3xl font-bold mb-8">订阅价格</h1>
-                <div class="bg-gradient-to-b from-gray-800 to-black border border-emerald-500 p-8 rounded-3xl max-w-sm mx-auto">
+                <div class="bg-gradient-to-b from-gray-800 to-black border border-emerald-500 p-10 rounded-3xl max-w-sm mx-auto shadow-2xl shadow-emerald-900/50 relative">
+                    <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-emerald-500 text-black px-4 py-1 rounded-full text-xs font-bold">MOST POPULAR</div>
                     <h3 class="text-xl font-bold text-emerald-400 mb-2">PRO 操盘手</h3>
                     <div class="text-5xl font-bold text-white mb-2">RM 68<span class="text-lg text-gray-500">/月</span></div>
-                    <a href="https://t.me/footballscbet_bot" target="_blank" class="block w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold mt-6">立即订阅</a>
+                    <ul class="text-left text-sm text-gray-400 space-y-3 my-8 pl-4">
+                        <li><i class="fas fa-check text-emerald-500 mr-2"></i> 解锁所有实时压力信号</li>
+                        <li><i class="fas fa-check text-emerald-500 mr-2"></i> 0 延迟 Telegram 推送</li>
+                        <li><i class="fas fa-check text-emerald-500 mr-2"></i> 包含英超赛前深度分析</li>
+                    </ul>
+                    <a href="https://t.me/footballscbet_bot" target="_blank" class="block w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold mt-6 transition transform hover:scale-105">立即订阅</a>
                 </div>
             </div>
         </section>
@@ -288,6 +355,8 @@
             document.getElementById('modal-content').innerHTML = content;
             document.getElementById('match-modal').classList.remove('hidden');
         }
+
+        function toggleLanguage() {} // 简化展示
 
         // 初始化
         switchTab('home');
