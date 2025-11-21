@@ -9,6 +9,7 @@
     <meta property="og:site_name" content="OddsFlow AI">
     
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     
@@ -186,81 +187,198 @@
 
         // 3. 数据源
         const matchesData = [
-          {
-            "type": "match",
-            "result": {
-              "match_info": { "league": "Thailand U21 League", "home_team": "Kanchanaburi Power", "away_team": "Nong Bua Pitchaya", "score": "1-5", "minute": 83, "red_home": 0, "red_away": 0, "dangerous_attacks_home": 28, "dangerous_attacks_away": 42, "corners_home": 4, "corners_away": 6, "shots_on_target_home": 4, "shots_on_target_away": 11 },
-              "beginner_friendly_text": "比赛快到尾声，客队攻势更猛，有更多有威胁的进攻和射门，比赛节奏很快，这说明客队在比赛中占上风。",
-              "bet_recommendation": { "bet_type": "Lean to Away", "confidence_level": "Strong", "risk_level": "High" }
+        <script>
+            <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        // ==========================================
+        // 1. 配置中心 (填入你的 Supabase 钥匙)
+        // ==========================================
+        const SUPABASE_URL = 'https://ncubbsgzebbmoqslyukd.supabase.co'; 
+        const SUPABASE_KEY = 'sb_publishable_sVNMF9y0NlYxSqjqKqwySw_b1DJyEdg'; // ⚠️ 必须填入你的 Anon Key
+        const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // 定义全局变量，用于存储混合后的数据（比赛+广告）
+        let matchesData = [];
+
+        // ==========================================
+        // 2. 广告配置 (保持不变)
+        // ==========================================
+        const adsData = [
+            {
+                type: "ad",
+                content: { 
+                    brand: "👑 官方推荐: GSlot16", 
+                    title: "全网最稳老虎机/真人视讯平台", 
+                    desc: "大额无忧，秒充秒提。OddsFlow 用户专享开户红利，点击立即领取。", 
+                    btn_text: "进入 GSlot16 官网", 
+                    link: "https://gslot16.com?ag=RS-c2VzYW1lcmFiYml0" 
+                }
+            },
+            {
+                type: "ad",
+                content: { 
+                    brand: "⚽ BK8 亚洲第一体育", 
+                    title: "OddsFlow 独家合作伙伴", 
+                    desc: "英超官方赞助商。体育赛事赔率最高，新用户首存送 200%。", 
+                    btn_text": "领取 BK8 红利", 
+                    link": "https://www.bk8.com/" 
+                }
             }
-          },
-          // 🔥 广告位 1: GSlot16 (已植入你的专属链接)
-          {
-            "type": "ad",
-            "content": { 
-                "brand": "👑 官方推荐: GSlot16", 
-                "title": "全网最稳老虎机/真人视讯平台", 
-                "desc": "大额无忧，秒充秒提。OddsFlow 用户专享开户红利，点击立即领取。", 
-                "btn_text": "进入 GSlot16 官网", 
-                
-                // 👇 这里已经换成了你的赚钱链接
-                "link": "https://gslot16.com?ag=RS-c2VzYW1lcmFiYml0" 
-            }
-          },
-          {
-            "type": "match",
-            "result": {
-              "match_info": { "league": "Iran Div 2", "home_team": "Ferdosi Samen", "away_team": "Aseman Golestan", "score": "0-1", "minute": 45, "red_home": 0, "red_away": 0, "dangerous_attacks_home": 54, "dangerous_attacks_away": 29, "corners_home": 4, "corners_away": 2, "shots_on_target_home": 2, "shots_on_target_away": 3 },
-              "beginner_friendly_text": "虽然客队领先1球，但主队发动的危险进攻次数(54)远超客队(29)。主队动作更积极，有反扑迹象。",
-              "bet_recommendation": { "bet_type": "Lean to Home", "confidence_level": "Medium", "risk_level": "Medium" }
-            }
-          },
-          {
-            "type": "ad",
-            "content": { "brand": "⚽ BK8 亚洲第一体育", "title": "OddsFlow 独家合作伙伴", "desc": "英超官方赞助商。体育赛事赔率最高，新用户首存送 200%。", "btn_text": "领取 BK8 红利", "link": "https://www.bk8.com/" }
-          },
-          {
-            "type": "match",
-            "result": {
-              "match_info": { "league": "Croatia 1st League (W)", "home_team": "ZNK Agram (W)", "away_team": "ZNK Osijek (W)", "score": "3-0", "minute": 41, "red_home": 0, "red_away": 0, "dangerous_attacks_home": 32, "dangerous_attacks_away": 20, "corners_home": 3, "corners_away": 0, "shots_on_target_home": 5, "shots_on_target_away": 2 },
-              "beginner_friendly_text": "主队射门次数多且更具威胁，完全掌控比赛。危险进攻次数上主队领先，显示他们创造了更多得分机会。",
-              "bet_recommendation": { "bet_type": "Lean to Home", "confidence_level": "Strong", "risk_level": "Low" }
-            }
-          }
         ];
 
-        // 4. 渲染逻辑
+        // ==========================================
+        // 3. 核心引擎：抓取数据 & 混合广告
+        // ==========================================
+        async function fetchAndRender() {
+            const container = document.getElementById('match-container');
+            // 加载中状态
+            container.innerHTML = `
+                <div class="text-center py-10 text-emerald-500 animate-pulse">
+                    <i class="fas fa-satellite-dish text-3xl mb-4"></i>
+                    <p>正在连接卫星信号...</p>
+                </div>`;
+
+            // A. 从 Supabase 读取最新 20 条信号
+            const { data: dbMatches, error } = await supabase
+                .from('live_signals')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(20);
+
+            if (error) {
+                console.error("Supabase Error:", error);
+                container.innerHTML = `<div class="text-center text-red-500 py-10">数据连接失败，请检查网络</div>`;
+                return;
+            }
+
+            // B. 混合数据 (三明治算法)
+            matchesData = []; // 清空全局数据
+            
+            if (dbMatches && dbMatches.length > 0) {
+                dbMatches.forEach((match, index) => {
+                    // 1. 放入比赛
+                    matchesData.push({ type: 'match', result: match });
+                    
+                    // 2. 插入广告 (第1场后插GSlot, 第3场后插BK8)
+                    if (index === 0) matchesData.push(adsData[0]);
+                    if (index === 2) matchesData.push(adsData[1]);
+                });
+            } else {
+                container.innerHTML = `<div class="text-center text-gray-500 py-10">AI 正在扫描中，暂无高风险比赛...</div>`;
+                return;
+            }
+
+            // C. 开始渲染
+            renderMatches();
+        }
+
+        // ==========================================
+        // 4. 渲染逻辑 (负责画图)
+        // ==========================================
         function renderMatches() {
             const container = document.getElementById('match-container');
-            if(!container) return;
+            if (!container) return;
+            
             let html = '';
+
             matchesData.forEach((data, index) => {
+                // --- 渲染广告 ---
                 if (data.type === 'ad') {
-                    html += `<div class="bg-gradient-to-r from-yellow-900/40 to-black p-5 rounded-xl border border-yellow-500/50 relative overflow-hidden mb-4"><div class="absolute top-0 right-0 bg-yellow-500 text-black text-[10px] font-bold px-2 py-1 rounded-bl-lg">SPONSORED</div><div class="flex items-start gap-4"><div class="w-12 h-12 bg-yellow-500/20 rounded-full flex items-center justify-center text-2xl">🎁</div><div class="flex-1"><div class="text-yellow-400 font-bold text-sm mb-1">${data.content.brand}</div><h3 class="text-white font-bold text-lg mb-2">${data.content.title}</h3><p class="text-gray-400 text-xs mb-4">${data.content.desc}</p><a href="${data.content.link}" target="_blank" class="inline-block w-full text-center bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-2 rounded-lg text-sm transition">${data.content.btn_text}</a></div></div><div class="mt-3 text-center"><a href="https://t.me/footballscbet_bot" class="text-[10px] text-gray-600 underline hover:text-gray-400">在此处投放广告 ></a></div></div>`;
+                    html += `
+                    <div class="bg-gradient-to-r from-yellow-900/40 to-black p-5 rounded-xl border border-yellow-500/50 relative overflow-hidden mb-4">
+                        <div class="absolute top-0 right-0 bg-yellow-500 text-black text-[10px] font-bold px-2 py-1 rounded-bl-lg">SPONSORED</div>
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 bg-yellow-500/20 rounded-full flex items-center justify-center text-2xl">🎁</div>
+                            <div class="flex-1">
+                                <div class="text-yellow-400 font-bold text-sm mb-1">${data.content.brand}</div>
+                                <h3 class="text-white font-bold text-lg mb-2">${data.content.title}</h3>
+                                <p class="text-gray-400 text-xs mb-4">${data.content.desc}</p>
+                                <a href="${data.content.link}" target="_blank" class="inline-block w-full text-center bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-2 rounded-lg text-sm transition">${data.content.btn_text}</a>
+                            </div>
+                        </div>
+                        <div class="mt-3 text-center"><a href="https://t.me/OddsFlowAdmin" class="text-[10px] text-gray-600 underline hover:text-gray-400">在此处投放广告 ></a></div>
+                    </div>`;
                     return;
                 }
-                const info = data.result.match_info;
-                const rec = data.result.bet_recommendation;
-                const totalDA = info.dangerous_attacks_home + info.dangerous_attacks_away;
-                const homePressure = totalDA === 0 ? 50 : Math.round((info.dangerous_attacks_home / totalDA) * 100);
-                const homeRed = info.red_home > 0 ? '<span class="bg-red-600 text-white text-[10px] px-1 rounded ml-1">RED</span>' : '';
-                const awayRed = info.red_away > 0 ? '<span class="bg-red-600 text-white text-[10px] px-1 rounded ml-1">RED</span>' : '';
-                html += `<div onclick="openModal(${index})" class="bg-glass p-5 rounded-xl border-l-4 border-emerald-500 relative overflow-hidden cursor-pointer hover:bg-gray-800/80 transition group mb-4"><div class="absolute top-2 right-2 text-gray-600 group-hover:text-emerald-500"><i class="fas fa-expand-alt"></i></div><div class="flex justify-between items-center mb-4"><div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-500 rounded-full live-dot"></span><span class="text-xs font-bold text-gray-400 uppercase">${info.league} • ${info.minute}'</span></div><div class="bg-emerald-900/50 text-emerald-400 text-xs px-2 py-1 rounded border border-emerald-500/20 font-mono">${rec.confidence_level} Conf</div></div><div class="flex justify-between items-center mb-4"><div class="text-lg font-bold w-1/3 text-right truncate">${info.home_team} ${homeRed}</div><div class="w-1/3 text-center"><span class="px-3 py-1 bg-black/50 rounded text-xl font-mono font-bold text-white border border-gray-700">${info.score}</span></div><div class="text-lg font-bold w-1/3 text-left truncate">${awayRed} ${info.away_team}</div></div><div class="mb-2"><div class="h-2 bg-gray-800 rounded-full overflow-hidden flex shadow-inner"><div style="width: ${homePressure}%" class="h-full bg-blue-600"></div><div style="width: ${100-homePressure}%" class="h-full bg-red-600"></div></div><div class="flex justify-between text-[10px] text-gray-500 mt-1"><span>压力: ${homePressure}%</span><span>压力: ${100-homePressure}%</span></div></div><div class="text-center text-xs text-emerald-400 font-bold mt-3 border-t border-gray-700 pt-2">点击查看深度数据 & 战绩分析 ></div></div>`;
+
+                // --- 渲染真实比赛 ---
+                // 注意：这里直接读取数据库的字段名，不需要 .match_info 这层壳了
+                const m = data.result; 
+                
+                // 容错处理：防止数据库字段为空导致白屏
+                const home = m.home_team || '主队';
+                const away = m.away_team || '客队';
+                const score = m.score || '0-0';
+                const pressure = m.pressure_val || 50;
+                const league = m.league || 'Live Match';
+                const time = m.time || 'Live';
+                const rec = m.recommendation || 'AI 分析中...';
+
+                html += `
+                <div onclick="openModal(${index})" class="bg-glass p-5 rounded-xl border-l-4 border-emerald-500 relative overflow-hidden cursor-pointer hover:bg-gray-800/80 transition group mb-4">
+                    <div class="absolute top-2 right-2 text-gray-600 group-hover:text-emerald-500"><i class="fas fa-expand-alt"></i></div>
+                    
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 bg-red-500 rounded-full live-dot"></span>
+                            <span class="text-xs font-bold text-gray-400 uppercase truncate max-w-[200px]">${league} • ${time}'</span>
+                        </div>
+                        <div class="bg-emerald-900/50 text-emerald-400 text-xs px-2 py-1 rounded border border-emerald-500/20 font-mono">Strong Conf</div>
+                    </div>
+                    
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="text-lg font-bold w-1/3 text-right truncate">${home}</div>
+                        <div class="w-1/3 text-center"><span class="px-3 py-1 bg-black/50 rounded text-xl font-mono font-bold text-white border border-gray-700">${score}</span></div>
+                        <div class="text-lg font-bold w-1/3 text-left truncate">${away}</div>
+                    </div>
+
+                    <div class="mb-2">
+                        <div class="h-2 bg-gray-800 rounded-full overflow-hidden flex shadow-inner">
+                            <div style="width: ${pressure}%" class="h-full bg-blue-600"></div>
+                            <div style="width: ${100-pressure}%" class="h-full bg-red-600"></div>
+                        </div>
+                        <div class="flex justify-between text-[10px] text-gray-500 mt-1"><span>主队压力: ${pressure}%</span><span>客队压力</span></div>
+                    </div>
+                    <div class="text-center text-xs text-emerald-400 font-bold mt-3 border-t border-gray-700 pt-2">
+                        <i class="fas fa-robot mr-1"></i> AI 建议: ${rec.substring(0, 20)}...
+                    </div>
+                </div>`;
             });
             container.innerHTML = html;
         }
 
+        // ==========================================
+        // 5. 弹窗逻辑 (适配真实数据)
+        // ==========================================
         function openModal(index) {
             const data = matchesData[index];
-            if (!data || data.type !== 'match') return; 
-            const info = data.result.match_info;
-            const pre = data.result.pre_match_info || { table_rank: "N/A", avg_goals: "-", form_home: [], form_away: [], h2h: "暂无数据" };
-            const ai = data.result.beginner_friendly_text;
-            const renderForm = (forms) => {
-                if (!forms || forms.length === 0) return '<span class="text-gray-600 text-xs">暂无</span>';
-                return forms.map(f => `<span class="w-5 h-5 flex items-center justify-center rounded text-[10px] font-bold ${f==='W'?'form-w':(f==='D'?'form-d':'form-l')}">${f}</span>`).join('');
-            };
-            const content = `<div class="bg-gradient-to-r from-emerald-900/20 to-black p-4 rounded-xl border border-emerald-500/30 mb-6"><h4 class="text-emerald-400 font-bold text-sm mb-2"><i class="fas fa-robot"></i> AI 实时解读</h4><p class="text-gray-300 text-sm leading-relaxed">${ai}</p></div><div class="mb-6"><h4 class="text-white font-bold text-sm mb-3 border-l-2 border-blue-500 pl-2">赛前基本面 (Pre-Match)</h4><div class="grid grid-cols-2 gap-4 mb-4"><div class="bg-gray-800/50 p-3 rounded-lg"><div class="text-xs text-gray-500 mb-1">联赛排名</div><div class="text-white font-mono text-sm">${pre.table_rank}</div></div><div class="bg-gray-800/50 p-3 rounded-lg"><div class="text-xs text-gray-500 mb-1">场均进球</div><div class="text-white font-mono text-sm">${pre.avg_goals}</div></div></div></div><div><h4 class="text-white font-bold text-sm mb-3 border-l-2 border-red-500 pl-2">实时数据详情 (Live Stats)</h4><div class="grid grid-cols-3 gap-2 text-center"><div class="bg-gray-800 p-2 rounded"><div class="text-xl font-bold text-white">${info.dangerous_attacks_home}</div><div class="text-[10px] text-gray-500">危险进攻</div><div class="text-xl font-bold text-white">${info.dangerous_attacks_away}</div></div><div class="bg-gray-800 p-2 rounded"><div class="text-xl font-bold text-white">${info.shots_on_target_home}</div><div class="text-[10px] text-gray-500">射正</div><div class="text-xl font-bold text-white">${info.shots_on_target_away}</div></div><div class="bg-gray-800 p-2 rounded"><div class="text-xl font-bold text-white">${info.corners_home}</div><div class="text-[10px] text-gray-500">角球</div><div class="text-xl font-bold text-white">${info.corners_away}</div></div></div></div>`;
+            if (!data || data.type !== 'match') return;
+            
+            const m = data.result;
+            // 这里的字段名要和 Supabase 里的列名对应
+            const aiReasoning = m.recommendation || "AI 正在计算实时赔率价值...";
+            
+            const content = `
+                <div class="bg-gradient-to-r from-emerald-900/20 to-black p-4 rounded-xl border border-emerald-500/30 mb-6">
+                    <h4 class="text-emerald-400 font-bold text-sm mb-2"><i class="fas fa-robot"></i> AI 深度分析</h4>
+                    <p class="text-gray-300 text-sm leading-relaxed">${aiReasoning}</p>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="bg-gray-800 p-3 rounded text-center">
+                        <div class="text-xs text-gray-500">主队压力指数</div>
+                        <div class="text-xl font-bold text-blue-400">${m.pressure_val || 50}</div>
+                    </div>
+                    <div class="bg-gray-800 p-3 rounded text-center">
+                        <div class="text-xs text-gray-500">比赛时间</div>
+                        <div class="text-xl font-bold text-white">${m.time || 'Live'}'</div>
+                    </div>
+                </div>
+
+                <div class="text-center text-gray-500 text-xs">
+                    * 更多赛前数据 (排名/H2H) 请升级 PRO 会员查看
+                </div>
+            `;
+
             document.getElementById('modal-content').innerHTML = content;
             const modal = document.getElementById('match-modal');
             const panel = document.getElementById('modal-panel');
@@ -275,9 +393,14 @@
             setTimeout(() => modal.classList.add('hidden'), 300);
         }
 
-        // 5. 页面加载初始化
+        // 辅助函数：语言切换 & 页面切换
+        let currentLang='zh';
+        // ... (这里保留之前的 toggleLanguage 和 switchTab 函数，不用动) ...
+        const translations={zh:{nav_home:"首页",nav_terminal:"交易终端",nav_guide:"教程",nav_pricing:"价格",btn_telegram:"加入电报群",hero_badge:"🚀 全网首个 AI 驱动的足球交易扫描仪",hero_title_1:"别再盲目入场。",hero_title_2:"开始像专家一样交易。",hero_sub:"OddsFlow 实时监控全球 500+ 场比赛。当压力指数爆表或赔率出现漏洞时，AI 会在进球发生前 2 分钟通知你。",btn_demo:"进入演示终端",btn_how:"原理是什么？",stat_matches:"每日扫描比赛",stat_latency:"数据延迟",stat_accuracy:"AI 准确率",stat_uptime:"自动化运行",dash_title:"实时监控中心",badge_alert:"绝杀预警",pressure_home:"主队施压 (92%)",pressure_away:"反击 (8%)",rec_market:"推荐盘口",ai_label:"AI 分析：",ai_text:"主队过去 5 分钟射门 4 次，角球 2 个。客队体力耗尽。进球概率极高。",lock_text:"还有 14 场高价值比赛正在进行...",lock_btn:"加入会员解锁",guide_title:"如何使用 OddsFlow 获利？",guide_1_title:"01. 看懂“压力条”",guide_1_text:"压力条显示了当前的比赛局势。如果主队压力 > 80%，说明正在围攻，买入“大球”或“主胜”胜率极高。",guide_2_title:"02. 什么是“价值注”？",guide_2_text:"当 AI 算出的真实胜率高于庄家赔率暗示的胜率时，就是价值注。长期跟投价值注，从数学上讲，你就是庄家。",price_title:"简单定价，百倍回报",price_sub:"每天只需一杯咖啡钱，获取专业机构级的数据。",plan_free:"游客版",btn_join_free:"加入体验群",plan_pro:"PRO 操盘手",btn_sub_pro:"立即订阅 (Telegram)"},en:{nav_home:"Home",nav_terminal:"Terminal",nav_guide:"Guide",nav_pricing:"Pricing",btn_telegram:"Join Telegram",hero_badge:"🚀 The #1 AI-Powered Football Trading Scanner",hero_title_1:"Stop Gambling Blindly.",hero_title_2:"Start Trading Like a Pro.",hero_sub:"OddsFlow tracks 500+ matches daily. When Pressure Index peaks or odds drop, AI alerts you 2 minutes before the goal happens.",btn_demo:"Launch Terminal",btn_how:"How it Works?",stat_matches:"Daily Matches",stat_latency:"Data Latency",stat_accuracy:"AI Accuracy",stat_uptime:"System Uptime",dash_title:"Live Monitor",badge_alert:"GOAL ALERT",pressure_home:"Home Pressure (92%)",pressure_away:"Counter (8%)",rec_market:"Market",ai_label:"AI Insight:",ai_text:"Home team 4 shots in last 5 mins. Away team exhausted. Goal probability is critical.",lock_text:"14 more high-value matches in progress...",lock_btn:"Unlock Full Data",guide_title:"How to Profit with OddsFlow?",guide_1_title:"01. The Pressure Gauge",guide_1_text:"Visualizes momentum. If Home Pressure > 80%, they are sieging. High probability for Over Goals or Home Win.",guide_2_title:"02. What is Value Bet?",guide_2_text:"When AI probability is higher than Bookie implied probability. Mathematically, you become the House in the long run.",price_title:"Simple Price. Huge ROI.",price_sub:"Professional institutional data for the price of a coffee.",plan_free:"Guest",btn_join_free:"Join Free Group",plan_pro:"PRO Trader",btn_sub_pro:"Subscribe Now (Telegram)"}};
+        function toggleLanguage(){currentLang=currentLang==='zh'?'en':'zh';document.getElementById('lang-display').innerHTML=currentLang==='zh'?'EN / <span class="text-emerald-500">CN</span>':'<span class="text-emerald-500">EN</span> / CN';document.querySelectorAll('[data-i18n]').forEach(el=>{const key=el.getAttribute('data-i18n');if(translations[currentLang][key]){el.innerText=translations[currentLang][key];}});}
+        function switchTab(tabId){document.querySelectorAll('.page-section').forEach(el=>{el.classList.remove('active');setTimeout(()=>{if(!el.classList.contains('active'))el.style.display='none';},300);});const target=document.getElementById(tabId);target.style.display='block';setTimeout(()=>target.classList.add('active'),10);document.querySelectorAll('.nav-btn').forEach(btn=>{if(btn.dataset.target===tabId){btn.classList.add('text-white');btn.classList.remove('text-gray-400');}else{btn.classList.remove('text-white');btn.classList.add('text-gray-400');}});}
+
+        // 6. 启动引擎
         switchTab('home');
-        renderMatches();
+        fetchAndRender(); // 🔥 这里改成了调用 Supabase 的函数
     </script>
-</body>
-</html>
