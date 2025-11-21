@@ -4,13 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OddsFlow AI - 智能足球交易终端</title>
-    
     <meta name="description" content="OddsFlow AI - 实时足球赔率监控与英超大数据分析。">
-    <meta property="og:site_name" content="OddsFlow AI">
     
-    <!-- 核心 SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Chart.js用于画图 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> 
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     
@@ -18,215 +17,331 @@
         body { font-family: 'Inter', sans-serif; background-color: #050505; color: #e5e7eb; }
         .font-mono { font-family: 'JetBrains Mono', monospace; }
         
-        /* 玻璃拟态卡片 */
+        /* 玻璃拟态 */
         .bg-glass { 
-            background: rgba(20, 20, 20, 0.4); 
-            backdrop-filter: blur(20px); 
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08); 
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            background: rgba(20, 20, 20, 0.6); 
+            backdrop-filter: blur(12px); 
+            border: 1px solid rgba(255, 255, 255, 0.05); 
         }
-        
-        /* 背景雾化效果 */
-        .hero-bg {
-            background-image: url('https://images.unsplash.com/photo-1518091043644-c1d4457512c6?q=80&w=2831&auto=format&fit=crop'); 
-            background-size: cover;
-            background-position: center;
+        .sidebar-glass {
+            background: rgba(10, 10, 10, 0.8);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
         }
         
         /* 动画 */
-        @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-        .ticker-wrap { overflow: hidden; white-space: nowrap; }
-        .ticker-content { display: inline-block; animation: scroll 40s linear infinite; }
+        @keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } }
+        .live-dot { animation: pulse-green 2s infinite; }
         
-        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-15px); } }
+        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
         .animate-float { animation: float 6s ease-in-out infinite; }
-        .animate-float-delay { animation: float 7s ease-in-out infinite 1.5s; }
+
+        /* 隐藏滚动条 */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
         
-        /* 状态色 */
-        .pressure-bar { transition: width 1s ease-in-out; }
         .page-section { display: none; opacity: 0; transition: opacity 0.3s ease-in-out; }
         .page-section.active { display: block; opacity: 1; }
     </style>
 </head>
-<body class="antialiased h-screen flex flex-col overflow-hidden">
+<body class="antialiased h-screen flex overflow-hidden text-sm">
 
-    <!-- 1. 跑马灯 (半透明背景) -->
-    <div class="bg-black/80 border-b border-white/5 h-8 flex items-center overflow-hidden shrink-0 z-50 backdrop-blur-sm">
-        <div class="ticker-wrap">
-            <div class="ticker-content text-xs font-mono flex gap-8 text-emerald-400">
-                <span>🚀 SIGNAL: Live Pressure Spike Detected</span>
-                <span>🏆 EPL: Chelsea vs Burnley Analysis Ready</span>
-                <span>💰 VALUE: High Confidence Bets Generated</span>
-                <span>🚨 ALERT: Dropping Odds in Asian Market</span>
-                <span>🚀 SIGNAL: Live Pressure Spike Detected</span>
-                <span>🏆 EPL: Chelsea vs Burnley Analysis Ready</span>
-                <span>💰 VALUE: High Confidence Bets Generated</span>
-                <span>🚨 ALERT: Dropping Odds in Asian Market</span>
+    <!-- 1. 左侧边栏 (Sidebar) - 对标竞品 -->
+    <aside class="w-64 sidebar-glass flex-col hidden md:flex z-50">
+        <!-- Logo -->
+        <div class="h-16 flex items-center px-6 border-b border-white/5">
+            <div class="w-8 h-8 bg-emerald-600 rounded flex items-center justify-center text-white mr-3 font-bold shadow-lg shadow-emerald-500/20">
+                <i class="fas fa-bolt"></i>
             </div>
+            <span class="font-bold text-lg text-white tracking-tight">OddsFlow</span>
+        </div>
+
+        <!-- 菜单 -->
+        <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+            <p class="px-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2 mt-2">Main Menu</p>
+            
+            <button onclick="switchTab('home')" class="nav-item w-full flex items-center px-3 py-2.5 rounded-lg text-gray-400 hover:bg-white/5 hover:text-white transition group">
+                <i class="fas fa-home w-6 text-center mr-2 group-hover:text-emerald-400 transition"></i> 首页概览
+            </button>
+            
+            <button onclick="switchTab('dashboard')" class="nav-item w-full flex items-center px-3 py-2.5 rounded-lg text-gray-400 hover:bg-white/5 hover:text-white transition group">
+                <i class="fas fa-satellite-dish w-6 text-center mr-2 group-hover:text-red-400 transition animate-pulse"></i> 
+                <span>实时终端</span>
+                <span class="ml-auto bg-red-500/20 text-red-400 text-[10px] px-1.5 rounded">LIVE</span>
+            </button>
+            
+            <button onclick="switchTab('epl')" class="nav-item w-full flex items-center px-3 py-2.5 rounded-lg text-gray-400 hover:bg-white/5 hover:text-white transition group">
+                <i class="fas fa-shield-alt w-6 text-center mr-2 group-hover:text-purple-400 transition"></i> 英超前瞻
+            </button>
+
+            <p class="px-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2 mt-6">Tools</p>
+            
+            <button onclick="openCalcModal()" class="w-full flex items-center px-3 py-2.5 rounded-lg text-gray-400 hover:bg-white/5 hover:text-white transition group">
+                <i class="fas fa-calculator w-6 text-center mr-2"></i> 凯利计算器
+            </button>
+            
+            <button onclick="switchTab('guide')" class="nav-item w-full flex items-center px-3 py-2.5 rounded-lg text-gray-400 hover:bg-white/5 hover:text-white transition group">
+                <i class="fas fa-book w-6 text-center mr-2"></i> 使用教程
+            </button>
+        </nav>
+
+        <!-- 底部用户区 -->
+        <div class="p-4 border-t border-white/5">
+            <a href="https://t.me/footballscbet_bot" target="_blank" class="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-emerald-900/50 to-emerald-800/50 border border-emerald-500/20 hover:border-emerald-500/50 transition cursor-pointer group">
+                <div class="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-black font-bold">
+                    <i class="fas fa-crown"></i>
+                </div>
+                <div>
+                    <div class="text-xs font-bold text-white group-hover:text-emerald-400 transition">升级 PRO 版</div>
+                    <div class="text-[10px] text-gray-400">解锁全部功能 ></div>
+                </div>
+            </a>
+        </div>
+    </aside>
+
+    <!-- 右侧主区域 -->
+    <div class="flex-1 flex flex-col h-full relative">
+        
+        <!-- 移动端顶部栏 (仅在手机显示) -->
+        <div class="md:hidden h-14 bg-black border-b border-gray-800 flex items-center justify-between px-4 z-50">
+            <div class="flex items-center gap-2">
+                <i class="fas fa-bolt text-emerald-500"></i>
+                <span class="font-bold text-white">OddsFlow</span>
+            </div>
+            <button onclick="document.querySelector('aside').classList.toggle('hidden'); document.querySelector('aside').classList.toggle('absolute'); document.querySelector('aside').classList.toggle('h-full');" class="text-gray-400"><i class="fas fa-bars text-xl"></i></button>
+        </div>
+
+        <!-- 顶部状态条 -->
+        <header class="h-14 border-b border-white/5 bg-black/20 backdrop-blur flex items-center justify-between px-6 shrink-0">
+            <div class="flex items-center gap-2 text-xs text-gray-400">
+                <span class="w-2 h-2 bg-emerald-500 rounded-full live-dot"></span>
+                System Status: <span class="text-emerald-400">Operational</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <a href="https://gslot16.com?ag=RS-c2VzYW1lcmFiYml0" target="_blank" class="text-xs font-bold text-yellow-500 hover:text-yellow-400 flex items-center gap-1">
+                    <i class="fas fa-coins"></i> GSlot16 余额查询
+                </a>
+                <div class="w-px h-4 bg-gray-700"></div>
+                <button class="text-gray-400 hover:text-white"><i class="fas fa-bell"></i></button>
+            </div>
+        </header>
+
+        <!-- 内容滚动区 -->
+        <div class="flex-1 overflow-y-auto p-4 md:p-8 relative" id="main-view">
+            
+            <!-- 背景装饰 -->
+            <div class="absolute top-0 left-0 w-full h-[500px] bg-gradient-to-b from-emerald-900/10 to-transparent pointer-events-none"></div>
+
+            <!-- HOME SECTION (视觉升级版) -->
+            <section id="home" class="page-section active max-w-6xl mx-auto">
+                <div class="flex flex-col lg:flex-row items-center gap-12 pt-10">
+                    
+                    <!-- 左侧：文案 -->
+                    <div class="flex-1 text-center lg:text-left z-10">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-emerald-400 text-[10px] font-bold mb-6">
+                            <span class="bg-emerald-500 w-1.5 h-1.5 rounded-full animate-ping"></span>
+                            v13.0 LIVE SYSTEM
+                        </div>
+                        <h1 class="text-5xl lg:text-7xl font-black text-white mb-6 leading-tight">
+                            数据驱动<br>
+                            <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-500">精准交易。</span>
+                        </h1>
+                        <p class="text-gray-400 text-lg mb-8 leading-relaxed max-w-lg mx-auto lg:mx-0">
+                            不像其他人靠运气。我们提供 <strong>实时压力指数</strong>、<strong>价值注模型</strong> 和 <strong>绝杀预警</strong>。做庄家的对手，而不是猎物。
+                        </p>
+                        <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                            <button onclick="switchTab('dashboard')" class="px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center justify-center gap-2">
+                                <i class="fas fa-play"></i> 启动终端
+                            </button>
+                            <button onclick="switchTab('epl')" class="px-8 py-4 bg-white/5 border border-white/10 hover:bg-white/10 text-white font-bold rounded-xl transition">
+                                查看英超数据
+                            </button>
+                        </div>
+                        
+                        <!-- 信任背书 -->
+                        <div class="mt-10 flex items-center justify-center lg:justify-start gap-6 text-gray-500 text-xs font-mono">
+                            <div class="flex items-center gap-2"><i class="fas fa-check-circle text-emerald-500"></i> N8N Verified</div>
+                            <div class="flex items-center gap-2"><i class="fas fa-check-circle text-emerald-500"></i> Low Latency</div>
+                            <div class="flex items-center gap-2"><i class="fas fa-check-circle text-emerald-500"></i> 24/7 Uptime</div>
+                        </div>
+                    </div>
+
+                    <!-- 右侧：动态仪表盘演示 (Mockup) -->
+                    <div class="flex-1 w-full max-w-md lg:max-w-full relative animate-float">
+                        <!-- 这是一个纯 CSS 画出来的模拟终端窗口 -->
+                        <div class="bg-[#0F1115] border border-gray-700 rounded-xl shadow-2xl overflow-hidden relative">
+                            <!-- 窗口头部 -->
+                            <div class="h-8 bg-[#161b22] border-b border-gray-700 flex items-center px-3 gap-2">
+                                <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                <div class="ml-4 text-[10px] text-gray-500 font-mono">oddsflow_terminal.exe</div>
+                            </div>
+                            <!-- 窗口内容 -->
+                            <div class="p-6 font-mono text-xs">
+                                <div class="flex justify-between mb-4 text-gray-400">
+                                    <span>TARGET: <span class="text-white font-bold">Man City</span></span>
+                                    <span>STATUS: <span class="text-emerald-400 animate-pulse">MONITORING</span></span>
+                                </div>
+                                <!-- 模拟图表 -->
+                                <div class="h-32 border-b border-gray-800 mb-4 relative">
+                                    <!-- 用 Canvas 画个简单的线 -->
+                                    <canvas id="heroChart" class="w-full h-full"></canvas>
+                                    <div class="absolute top-10 right-10 bg-red-500/20 border border-red-500 text-red-400 px-2 py-1 rounded text-[10px]">
+                                        ⚠️ HIGH PRESSURE
+                                    </div>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-500">Dangerous Attacks</span>
+                                        <div class="w-32 h-2 bg-gray-800 rounded-full overflow-hidden">
+                                            <div class="h-full bg-emerald-500 w-[85%]"></div>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-500">xG (Expected Goals)</span>
+                                        <span class="text-white">2.45 vs 0.32</span>
+                                    </div>
+                                    <div class="p-2 bg-emerald-900/20 border border-emerald-500/30 rounded mt-2 text-emerald-400">
+                                        > AI Recommendation: Over 2.5 Goals
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- 装饰光 -->
+                        <div class="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-emerald-500/20 blur-[80px]"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- DASHBOARD SECTION -->
+            <section id="dashboard" class="page-section">
+                <div class="flex justify-between items-end mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white">Live Feed</h2>
+                        <p class="text-xs text-gray-500">Real-time market data</p>
+                    </div>
+                    <div class="text-[10px] text-gray-500 font-mono">UPDATED: JUST NOW</div>
+                </div>
+                <div class="grid gap-4" id="match-container">
+                    <div class="text-center py-20 text-gray-500">Connecting...</div>
+                </div>
+            </section>
+
+            <!-- EPL SECTION -->
+            <section id="epl" class="page-section">
+                <div class="flex justify-between items-end mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-purple-400">EPL Fixtures</h2>
+                        <p class="text-xs text-gray-500">Premier League Analysis</p>
+                    </div>
+                </div>
+                <div class="grid md:grid-cols-2 gap-4" id="epl-container">
+                    <div class="text-center py-20 text-gray-500 col-span-2">Loading EPL Data...</div>
+                </div>
+            </section>
+
+            <!-- PRICING SECTION -->
+            <section id="pricing" class="page-section">
+                <div class="max-w-4xl mx-auto text-center pt-10">
+                    <h2 class="text-3xl font-bold mb-4">Simple Pricing</h2>
+                    <div class="bg-gradient-to-b from-gray-800 to-black border border-emerald-500 p-8 rounded-3xl max-w-sm mx-auto shadow-2xl shadow-emerald-900/20">
+                        <div class="text-emerald-400 font-bold mb-2">PRO ACCESS</div>
+                        <div class="text-5xl font-bold text-white mb-2">RM 68<span class="text-lg text-gray-500">/mo</span></div>
+                        <ul class="text-left text-sm text-gray-400 space-y-3 my-8 pl-4">
+                            <li><i class="fas fa-check text-emerald-500 mr-2"></i> Real-time Signals</li>
+                            <li><i class="fas fa-check text-emerald-500 mr-2"></i> Telegram Bot</li>
+                            <li><i class="fas fa-check text-emerald-500 mr-2"></i> Value Bets</li>
+                        </ul>
+                        <a href="https://t.me/footballscbet_bot" target="_blank" class="block w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold transition">Get Started</a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- GUIDE SECTION -->
+            <section id="guide" class="page-section">
+                <div class="max-w-3xl mx-auto pt-10">
+                    <h2 class="text-2xl font-bold mb-6">使用教程</h2>
+                    <div class="space-y-4">
+                        <div class="bg-glass p-6 rounded-xl">
+                            <h3 class="text-emerald-400 font-bold mb-2">1. 压力指数 (Pressure Index)</h3>
+                            <p class="text-gray-400 text-sm">当红色条超过 75% 时，表示主队正在疯狂围攻。这是入场“主胜”或“大球”的最佳时机。</p>
+                        </div>
+                        <div class="bg-glass p-6 rounded-xl">
+                            <h3 class="text-blue-400 font-bold mb-2">2. 绝杀预警 (Late Goal)</h3>
+                            <p class="text-gray-400 text-sm">如果比赛在 80 分钟后还是平局，但一方压力值极高，AI 会发送绝杀预警。</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
         </div>
     </div>
 
-    <!-- 2. 导航栏 -->
-    <nav class="w-full h-16 border-b border-white/5 bg-black/50 backdrop-blur-md flex items-center justify-between px-6 z-50 shrink-0 absolute top-8 w-full">
-        <div class="flex items-center gap-2 cursor-pointer" onclick="location.reload()">
-            <div class="w-8 h-8 bg-gradient-to-br from-emerald-500 to-blue-600 rounded-lg flex items-center justify-center text-black font-bold shadow-[0_0_15px_rgba(16,185,129,0.4)]"><i class="fas fa-bolt"></i></div>
-            <span class="font-bold text-xl tracking-tight text-white">OddsFlow<span class="text-emerald-500">.ai</span></span>
-        </div>
-        <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-300">
-            <button onclick="switchTab('home')" class="hover:text-white transition nav-btn text-white" data-target="home">首页</button>
-            <button onclick="switchTab('dashboard')" class="hover:text-white transition nav-btn" data-target="dashboard">实时终端</button>
-            <button onclick="switchTab('epl')" class="hover:text-white transition nav-btn text-purple-400 font-bold" data-target="epl"><i class="fas fa-shield-alt mr-1"></i>英超赛程</button>
-            <button onclick="switchTab('guide')" class="hover:text-white transition nav-btn" data-target="guide">教程</button>
-            <button onclick="switchTab('pricing')" class="hover:text-white transition nav-btn" data-target="pricing">价格</button>
-        </div>
-        <div class="flex items-center gap-4">
-            <a href="https://t.me/footballscbet_bot" target="_blank" class="bg-white text-black hover:bg-gray-200 px-4 py-2 rounded-full font-bold text-xs transition shadow-lg flex items-center gap-2"><i class="fab fa-telegram-plane"></i> 加入电报群</a>
-        </div>
-    </nav>
-
-    <!-- 主内容区 -->
-    <main class="flex-1 overflow-y-auto relative w-full h-full" id="main-content">
-        
-        <!-- =========================================
-             🔥 首页 (电影级视觉重构)
-        ========================================== -->
-        <section id="home" class="page-section active min-h-full relative flex items-center justify-center overflow-hidden">
-            
-            <!-- A. 背景层 (球场图 + 雾化) -->
-            <div class="absolute inset-0 hero-bg"></div>
-            <!-- B. 遮罩层 (让文字清晰) -->
-            <div class="absolute inset-0 bg-gradient-to-b from-black/70 via-black/80 to-[#050505]"></div>
-            <div class="absolute inset-0 bg-black/40 backdrop-blur-[2px]"></div>
-
-            <!-- C. 内容层 -->
-            <div class="max-w-7xl mx-auto px-6 relative z-10 w-full pt-20">
-                
-                <!-- 悬浮元素 (增加层次感) -->
-                <div class="hidden lg:block absolute -top-20 left-0 animate-float">
-                    <div class="bg-glass p-4 rounded-xl border-l-4 border-emerald-500 w-64">
-                        <div class="flex justify-between text-[10px] text-gray-400 mb-2"><span>Live Signal</span><span class="text-emerald-400">Just Now</span></div>
-                        <div class="font-bold text-white text-sm mb-1">Man Utd vs Chelsea</div>
-                        <div class="text-[10px] text-gray-300">Pressure Gauge: <span class="text-red-500 font-bold">92% (CRITICAL)</span></div>
-                    </div>
-                </div>
-                
-                <div class="hidden lg:block absolute top-40 right-0 animate-float-delay">
-                    <div class="bg-glass p-4 rounded-xl border-l-4 border-blue-500 w-64">
-                        <div class="flex justify-between text-[10px] text-gray-400 mb-2"><span>Value Bet</span><span class="text-blue-400">+15% Edge</span></div>
-                        <div class="font-bold text-white text-sm mb-1">Real Madrid Win</div>
-                        <div class="text-[10px] text-gray-300">Confidence: <span class="text-white font-bold">High</span></div>
-                    </div>
-                </div>
-
-                <div class="text-center">
-                    <!-- 标签 -->
-                    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-emerald-400 text-xs font-bold mb-8 backdrop-blur-md">
-                        <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span></span>
-                        全网首个 N8N 驱动的交易扫描仪
-                    </div>
-                    
-                    <!-- 🔥 新口号 (更霸气，无划线) -->
-                    <h1 class="text-6xl md:text-8xl font-black mb-6 leading-tight tracking-tight text-white drop-shadow-2xl">
-                        拒绝盲赌。<br>
-                        <span class="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500">数据为王。</span>
-                    </h1>
-                    
-                    <p class="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto mb-12 leading-relaxed font-light">
-                        OddsFlow 实时监控全球 <span class="text-white font-bold">500+</span> 场比赛。
-                        当压力指数爆表或赔率出现漏洞时，AI 将在进球前 2 分钟直接推送到你的手机。
-                    </p>
-                    
-                    <!-- 按钮组 -->
-                    <div class="flex flex-col sm:flex-row justify-center gap-5">
-                        <button onclick="switchTab('dashboard')" class="group px-8 py-4 bg-white text-black font-bold rounded-xl hover:bg-emerald-400 transition shadow-[0_0_40px_rgba(255,255,255,0.2)] flex items-center justify-center gap-2">
-                            <i class="fas fa-chart-line"></i> 进入实时终端
-                        </button>
-                        <button onclick="switchTab('epl')" class="group px-8 py-4 bg-white/5 text-white border border-white/20 rounded-xl hover:bg-white/10 hover:border-purple-500 hover:text-purple-400 transition font-bold flex items-center justify-center gap-2 backdrop-blur-md">
-                            <i class="fas fa-shield-alt"></i> 英超赛程
-                        </button>
-                    </div>
-                </div>
-
-                <!-- 数据统计 (底部) -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-32 border-t border-white/10 pt-12 opacity-80">
-                    <div class="text-center"><div class="text-4xl font-black text-white mb-1">500+</div><div class="text-[10px] text-gray-400 uppercase tracking-widest">Matches Daily</div></div>
-                    <div class="text-center"><div class="text-4xl font-black text-emerald-400 mb-1">~2s</div><div class="text-[10px] text-gray-400 uppercase tracking-widest">Data Latency</div></div>
-                    <div class="text-center"><div class="text-4xl font-black text-blue-400 mb-1">78%</div><div class="text-[10px] text-gray-400 uppercase tracking-widest">AI Accuracy</div></div>
-                    <div class="text-center"><div class="text-4xl font-black text-purple-400 mb-1">24/7</div><div class="text-[10px] text-gray-400 uppercase tracking-widest">Automated</div></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- 实时终端 (Dashboard) -->
-        <section id="dashboard" class="page-section pt-20">
-            <div class="text-center py-8">
-                <h1 class="text-2xl font-bold mb-2">实时监控终端 (Live)</h1>
-                <p class="text-xs text-gray-500">点击卡片查看深度分析</p>
-            </div>
-            <div class="max-w-3xl mx-auto space-y-4 px-4" id="match-container">
-                <div class="text-center py-10 text-gray-500 animate-pulse">正在连接 AI 卫星信号...</div>
-            </div>
-        </section>
-
-        <!-- 英超前瞻 (EPL) -->
-        <section id="epl" class="page-section pt-20">
-            <div class="text-center py-8">
-                <h1 class="text-2xl font-bold mb-2 text-purple-400">英超赛事前瞻</h1>
-                <p class="text-xs text-gray-500">Upcoming Premier League Analysis</p>
-            </div>
-            <div class="max-w-3xl mx-auto grid gap-4 px-4" id="epl-container">
-                <div class="text-center py-10 text-gray-500 animate-pulse">正在加载英超赛程...</div>
-            </div>
-        </section>
-
-        <!-- 教程 & 价格 -->
-        <section id="guide" class="page-section pt-20">
-            <div class="max-w-4xl mx-auto px-6 py-12 text-center">
-                <h1 class="text-3xl font-bold mb-8">如何获利？</h1>
-                <p class="text-gray-400">关注压力条 > 80% 的比赛，结合 AI 建议入场。</p>
-            </div>
-        </section>
-        
-        <section id="pricing" class="page-section pt-20">
-            <div class="max-w-4xl mx-auto px-6 py-12 text-center">
-                <h1 class="text-3xl font-bold mb-8">订阅价格</h1>
-                <div class="bg-gradient-to-b from-gray-800 to-black border border-emerald-500 p-8 rounded-3xl max-w-sm mx-auto">
-                    <h3 class="text-xl font-bold text-emerald-400 mb-2">PRO 操盘手</h3>
-                    <div class="text-5xl font-bold text-white mb-2">RM 68<span class="text-lg text-gray-500">/月</span></div>
-                    <a href="https://t.me/footballscbet_bot" target="_blank" class="block w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold mt-6">立即订阅</a>
-                </div>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- 通用弹窗 -->
+    <!-- 弹窗：比赛详情 -->
     <div id="match-modal" class="fixed inset-0 z-[100] hidden">
         <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeModal()"></div>
         <div class="absolute inset-x-0 bottom-0 md:inset-0 md:flex md:items-center md:justify-center pointer-events-none">
-            <div class="bg-[#0f0f0f] md:rounded-2xl md:max-w-2xl w-full p-6 border border-gray-800 shadow-2xl pointer-events-auto" id="modal-panel">
+            <div class="bg-[#0f0f0f] md:rounded-2xl md:max-w-xl w-full p-6 border border-gray-800 shadow-2xl pointer-events-auto" id="modal-panel">
                 <div id="modal-content"></div>
-                <button onclick="closeModal()" class="mt-6 w-full bg-gray-800 text-white py-3 rounded-xl font-bold hover:bg-gray-700">关闭窗口</button>
+                <button onclick="closeModal()" class="mt-6 w-full bg-gray-800 text-white py-3 rounded-xl font-bold hover:bg-gray-700">关闭</button>
             </div>
         </div>
     </div>
 
-    <!-- 🚀 核心引擎 -->
+    <!-- 弹窗：计算器 (新增功能) -->
+    <div id="calc-modal" class="fixed inset-0 z-[100] hidden">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="document.getElementById('calc-modal').classList.add('hidden')"></div>
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div class="bg-[#1a1a1a] rounded-xl w-80 p-6 border border-gray-700 pointer-events-auto shadow-2xl">
+                <h3 class="font-bold text-white mb-4">凯利公式计算器</h3>
+                <div class="space-y-3 text-xs">
+                    <div>
+                        <label class="text-gray-500 block mb-1">你的胜率预估 (%)</label>
+                        <input type="number" id="calc-win" class="w-full bg-black border border-gray-700 rounded p-2 text-white" placeholder="e.g. 60">
+                    </div>
+                    <div>
+                        <label class="text-gray-500 block mb-1">赔率 (Odds)</label>
+                        <input type="number" id="calc-odds" class="w-full bg-black border border-gray-700 rounded p-2 text-white" placeholder="e.g. 2.0">
+                    </div>
+                    <button onclick="calculateKelly()" class="w-full bg-blue-600 text-white py-2 rounded font-bold mt-2">计算仓位</button>
+                    <div id="calc-result" class="mt-4 text-center font-mono text-emerald-400 font-bold text-lg"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // 1. 优先定义页面切换
+        // ==========================================
+        // 1. 配置
+        // ==========================================
+        const SUPABASE_URL = 'https://ncubbsgzebbmoqslyukd.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_sVNMF9y0NlYxSqjqKqwySw_b1DJyEdg';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        let liveData = [];
+        let eplData = [];
+
+        const adsData = [
+            { type: "ad", content: { brand: "👑 官方推荐: GSlot16", title: "全网最稳老虎机", desc: "大额无忧，秒充秒提。", btn_text: "进入 GSlot16", link: "https://gslot16.com?ag=RS-c2VzYW1lcmFiYml0" } },
+            { type: "ad", content: { brand: "⚽ BK8 亚洲第一", title: "OddsFlow 合作伙伴", desc: "体育赔率最高，首存送 200%。", btn_text: "领取福利", link: "https://www.bk8.com/" } }
+        ];
+
+        // ==========================================
+        // 2. 页面控制
+        // ==========================================
         function switchTab(tabId){
-            document.querySelectorAll('.page-section').forEach(el=>{ el.classList.remove('active'); setTimeout(()=>{if(!el.classList.contains('active'))el.style.display='none';},300); });
-            const target=document.getElementById(tabId);
-            if(target) { target.style.display='block'; setTimeout(()=>target.classList.add('active'),10); }
+            document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
             
-            document.querySelectorAll('.nav-btn').forEach(btn=>{
-                btn.classList.remove('text-white', 'text-purple-400'); 
+            // 更新侧边栏状态
+            document.querySelectorAll('.nav-item').forEach(btn => {
+                btn.classList.remove('bg-white/10', 'text-white');
                 btn.classList.add('text-gray-400');
-                if(btn.getAttribute('data-target') === tabId) { 
-                    btn.classList.add('text-white'); 
-                    if(tabId === 'epl') btn.classList.add('text-purple-400');
-                    btn.classList.remove('text-gray-400'); 
+                if(btn.getAttribute('onclick').includes(tabId)) {
+                    btn.classList.add('bg-white/10', 'text-white');
+                    btn.classList.remove('text-gray-400');
                 }
             });
 
@@ -234,29 +349,26 @@
             if(tabId === 'epl') fetchEPL();
         }
 
-        function closeModal() { document.getElementById('match-modal').classList.add('hidden'); }
-
-        // 2. 数据层
-        let supabase = null;
-        let liveData = [];
-        let eplData = [];
-
-        try {
-            const SUPABASE_URL = 'https://ncubbsgzebbmoqslyukd.supabase.co';
-            const SUPABASE_KEY = 'sb_publishable_sVNMF9y0NlYxSqjqKqwySw_b1DJyEdg';
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        } catch (e) {
-            console.error("Supabase Init Failed:", e);
+        function openCalcModal() { document.getElementById('calc-modal').classList.remove('hidden'); }
+        
+        function calculateKelly() {
+            const win = parseFloat(document.getElementById('calc-win').value) / 100;
+            const odds = parseFloat(document.getElementById('calc-odds').value);
+            if(!win || !odds) return;
+            const b = odds - 1;
+            const f = ((b * win) - (1 - win)) / b;
+            const percent = (f * 100).toFixed(2);
+            const res = document.getElementById('calc-result');
+            if(f > 0) res.innerText = `建议仓位: ${percent}%`;
+            else { res.innerText = "不建议下注"; res.style.color = 'red'; }
         }
 
-        const adsData = [
-            { type: "ad", content: { brand: "👑 官方推荐: GSlot16", title: "全网最稳老虎机/真人视讯平台", desc: "大额无忧，秒充秒提。", btn_text: "进入 GSlot16 官网", link: "https://gslot16.com?ag=RS-c2VzYW1lcmFiYml0" } },
-            { type: "ad", content: { brand: "⚽ BK8 亚洲第一体育", title: "OddsFlow 独家合作伙伴", desc: "英超官方赞助商。体育赛事赔率最高。", btn_text: "领取 BK8 红利", link: "https://www.bk8.com/" } }
-        ];
-
-        // 3. 抓取实时比赛 (Live)
+        // ==========================================
+        // 3. 数据获取与渲染 (复用之前的稳定逻辑)
+        // ==========================================
+        
+        // Live Matches
         async function fetchLiveMatches() {
-            if(!supabase) return;
             const container = document.getElementById('match-container');
             try {
                 const { data, error } = await supabase.from('live_signals').select('*').order('created_at', { ascending: false }).limit(20);
@@ -271,92 +383,90 @@
                     });
                     renderLiveList();
                 } else {
-                    container.innerHTML = '<div class="text-center text-gray-500 py-10">AI 正在扫描中，暂无高风险比赛...</div>';
+                    container.innerHTML = '<div class="text-center text-gray-500 py-20">AI 扫描中...</div>';
                 }
-            } catch(e) { console.error(e); container.innerHTML = '<div class="text-center text-gray-500">数据连接中...</div>'; }
-        }
-
-        // 4. 抓取英超 (EPL)
-        async function fetchEPL() {
-            if(!supabase) return;
-            const container = document.getElementById('epl-container');
-            try {
-                const { data, error } = await supabase.from('upcoming_epl').select('*').order('created_at', { ascending: false });
-                
-                if(data && data.length > 0) {
-                    eplData = data;
-                } else {
-                    // 演示数据 (保证有东西看)
-                    eplData = [
-                        {
-                            start_date: "2025-11-22T12:30:00Z",
-                            home_team: "Burnley FC", away_team: "Chelsea FC", venue: "Turf Moor",
-                            home_logo: "https://cdn.opticodds.com/team-logos/soccer/3763.png",
-                            away_logo: "https://cdn.opticodds.com/team-logos/soccer/4009.png",
-                            win_prob_home: 14, win_prob_draw: 21, win_prob_away: 65,
-                            standings_json: [{ rank: 3, team: "Chelsea", p: 20, form: "WWLWW" }, { rank: 19, team: "Burnley", p: 5, form: "LLDLL" }]
-                        }
-                    ];
-                }
-                renderEPLList();
             } catch(e) { console.error(e); }
         }
-
-        // --- 渲染函数 ---
 
         function renderLiveList() {
             const container = document.getElementById('match-container');
             let html = '';
             liveData.forEach((item, index) => {
                 if(item.type === 'ad') {
-                    html += `<div class="bg-gradient-to-r from-yellow-900/40 to-black p-5 rounded-xl border border-yellow-500/50 mb-4"><div class="text-yellow-400 font-bold text-sm mb-1">${item.content.brand}</div><h3 class="text-white font-bold text-lg mb-2">${item.content.title}</h3><a href="${item.content.link}" target="_blank" class="block text-center bg-yellow-500 text-black font-bold py-2 rounded-lg text-sm">${item.content.btn_text}</a></div>`;
+                    html += `<div class="bg-gradient-to-r from-yellow-900/40 to-black p-4 rounded-xl border border-yellow-500/50 flex justify-between items-center"><div class="flex items-center gap-3"><div class="text-2xl">🎁</div><div><div class="text-yellow-400 font-bold text-xs">${item.content.brand}</div><div class="text-white font-bold text-sm">${item.content.desc}</div></div></div><a href="${item.content.link}" target="_blank" class="bg-yellow-500 text-black px-3 py-1.5 rounded text-xs font-bold">GO</a></div>`;
                     return;
                 }
                 const m = item.result;
                 const pVal = parseInt(m.pressure_val) || 50;
-                html += `<div onclick="openLiveModal(${index})" class="bg-glass p-5 rounded-xl border-l-4 border-emerald-500 cursor-pointer hover:bg-gray-800/80 transition mb-4"><div class="flex justify-between text-xs text-gray-400 mb-4"><span>${m.league || 'Live'} • ${m.time || 'Live'}</span><span class="text-emerald-400 font-mono">Strong Signal</span></div><div class="flex justify-between items-center mb-4"><span class="text-lg font-bold w-1/3 text-right truncate">${m.home_team}</span><span class="px-3 py-1 bg-black/50 rounded text-white font-mono">${m.score || '0-0'}</span><span class="text-lg font-bold w-1/3 text-left truncate">${m.away_team}</span></div><div class="h-2 bg-gray-800 rounded-full overflow-hidden flex shadow-inner mb-2"><div style="width: ${pVal}%" class="h-full bg-blue-600"></div><div style="width: ${100-pVal}%" class="h-full bg-red-600"></div></div><div class="text-center text-xs text-gray-500">AI: ${m.recommendation ? m.recommendation.substring(0,20) : '分析中...'}...</div></div>`;
+                html += `<div onclick="openLiveModal(${index})" class="bg-glass p-4 rounded-xl border-l-2 border-emerald-500 cursor-pointer hover:bg-white/5 transition mb-2"><div class="flex justify-between text-[10px] text-gray-400 mb-2"><span>${m.league} • ${m.time}'</span><span class="text-emerald-400">Live Signal</span></div><div class="flex justify-between items-center mb-2"><span class="font-bold text-white w-1/3 truncate text-right">${m.home_team}</span><span class="bg-black/50 px-2 py-0.5 rounded text-white font-mono mx-2">${m.score}</span><span class="font-bold text-white w-1/3 truncate text-left">${m.away_team}</span></div><div class="h-1.5 bg-gray-800 rounded-full overflow-hidden flex"><div style="width: ${pVal}%" class="bg-blue-500 h-full"></div><div style="width: ${100-pVal}%" class="bg-red-500 h-full"></div></div></div>`;
             });
             container.innerHTML = html;
+        }
+
+        // EPL Matches (Mock + Real)
+        async function fetchEPL() {
+            const container = document.getElementById('epl-container');
+            try {
+                const { data, error } = await supabase.from('upcoming_epl').select('*').order('created_at', { ascending: false });
+                eplData = (data && data.length > 0) ? data : [
+                    // Mock Data if empty
+                    {
+                        start_date: "2025-11-22T12:30:00Z",
+                        home_team: "Burnley", away_team: "Chelsea", venue: "Turf Moor",
+                        home_logo: "https://cdn.opticodds.com/team-logos/soccer/3763.png",
+                        away_logo: "https://cdn.opticodds.com/team-logos/soccer/4009.png",
+                        win_prob_home: 14, win_prob_draw: 21, win_prob_away: 65
+                    }
+                ];
+                renderEPLList();
+            } catch(e) { console.error(e); }
         }
 
         function renderEPLList() {
             const container = document.getElementById('epl-container');
             let html = '';
             eplData.forEach((m, index) => {
-                const date = new Date(m.start_date);
-                const timeStr = date.toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-                html += `<div onclick="openEPLModal(${index})" class="bg-[#1a1a1a] p-6 rounded-xl border border-purple-900/30 relative overflow-hidden cursor-pointer hover:border-purple-500 transition group"><div class="absolute top-0 left-0 bg-purple-600 text-white text-[10px] px-2 py-1 rounded-br-lg">EPL PREVIEW</div><div class="absolute top-2 right-2 text-gray-600 group-hover:text-purple-400"><i class="fas fa-chart-bar"></i> 分析</div><div class="text-center text-xs text-gray-500 mb-4">${timeStr} • ${m.venue}</div><div class="flex justify-between items-center"><div class="text-center w-1/3"><img src="${m.home_logo}" class="w-12 h-12 mx-auto mb-2 drop-shadow-lg"><div class="font-bold text-white text-sm">${m.home_team}</div></div><div class="text-2xl font-bold text-gray-700 font-mono">VS</div><div class="text-center w-1/3"><img src="${m.away_logo}" class="w-12 h-12 mx-auto mb-2 drop-shadow-lg"><div class="font-bold text-white text-sm">${m.away_team}</div></div></div></div>`;
+                html += `<div onclick="openEPLModal(${index})" class="bg-[#1a1a1a] p-4 rounded-xl border border-purple-900/30 cursor-pointer hover:border-purple-500 transition relative overflow-hidden"><div class="absolute top-0 left-0 bg-purple-600 text-[8px] px-2 py-0.5 text-white rounded-br">EPL</div><div class="flex justify-between items-center mt-2"><div class="text-center"><img src="${m.home_logo}" class="w-8 h-8 mx-auto mb-1"><div class="text-xs text-white">${m.home_team}</div></div><div class="text-gray-600 font-mono font-bold">VS</div><div class="text-center"><img src="${m.away_logo}" class="w-8 h-8 mx-auto mb-1"><div class="text-xs text-white">${m.away_team}</div></div></div></div>`;
             });
             container.innerHTML = html;
         }
 
+        // Modals
         function openLiveModal(i) {
             const m = liveData[i].result;
-            const pVal = parseInt(m.pressure_val) || 50;
-            const content = `<div class="bg-gradient-to-r from-emerald-900/20 to-black p-4 rounded-xl border border-emerald-500/30 mb-6"><h4 class="text-emerald-400 font-bold text-sm mb-2"><i class="fas fa-robot"></i> AI 深度分析</h4><p class="text-gray-300 text-sm leading-relaxed">${m.recommendation || '正在计算实时赔率价值...'}</p></div><div class="grid grid-cols-2 gap-4 mb-6"><div class="bg-gray-800 p-3 rounded text-center"><div class="text-xs text-gray-500">主队压力指数</div><div class="text-xl font-bold text-blue-400">${pVal}</div></div><div class="bg-gray-800 p-3 rounded text-center"><div class="text-xs text-gray-500">比赛时间</div><div class="text-xl font-bold text-white">${m.time || 'Live'}</div></div></div>`;
-            document.getElementById('modal-content').innerHTML = content;
+            document.getElementById('modal-content').innerHTML = `<div class="text-center"><div class="text-emerald-400 font-bold mb-2">AI 洞察</div><p class="text-gray-300 text-sm">${m.recommendation}</p></div>`;
             document.getElementById('match-modal').classList.remove('hidden');
         }
-
         function openEPLModal(i) {
             const m = eplData[i];
             const prob = { home: m.win_prob_home || 33, draw: m.win_prob_draw || 33, away: m.win_prob_away || 34 };
-            let standings = [];
-            try { standings = typeof m.standings_json === 'string' ? JSON.parse(m.standings_json) : m.standings_json; } catch(e){ standings = []; }
-            if(!standings) standings = [];
-
-            const content = `
-                <div class="flex justify-between items-center mb-8 px-4"><div class="text-center"><img src="${m.home_logo}" class="w-16 h-16 mx-auto mb-2"><h3 class="text-lg font-bold text-white">${m.home_team}</h3></div><div class="text-center"><div class="text-xs text-gray-500 uppercase tracking-widest">Win Probability</div><div class="text-3xl font-black text-white italic">VS</div></div><div class="text-center"><img src="${m.away_logo}" class="w-16 h-16 mx-auto mb-2"><h3 class="text-lg font-bold text-white">${m.away_team}</h3></div></div>
-                <div class="mb-8 bg-gray-900 p-4 rounded-xl border border-gray-800"><div class="flex justify-between text-xs text-gray-400 mb-2"><span class="text-red-500 font-bold">${prob.home}%</span><span>Draw ${prob.draw}%</span><span class="text-blue-500 font-bold">${prob.away}%</span></div><div class="flex h-3 rounded-full overflow-hidden"><div style="width: ${prob.home}%" class="bg-red-600 h-full"></div><div style="width: ${prob.draw}%" class="bg-gray-600 h-full"></div><div style="width: ${prob.away}%" class="bg-blue-600 h-full"></div></div></div>
-                <div class="mb-4"><h4 class="text-white font-bold text-sm mb-3 border-l-2 border-purple-500 pl-2">LIVE STANDINGS</h4><div class="overflow-x-auto"><table class="w-full text-xs text-left text-gray-400"><thead class="text-xs text-gray-500 uppercase bg-gray-800/50"><tr><th class="px-2 py-2">#</th><th class="px-2 py-2">Team</th><th class="px-2 py-2">Pts</th><th class="px-2 py-2">Form</th></tr></thead><tbody class="divide-y divide-gray-800">
-                ${standings.map(row => `<tr class="${row.team === m.home_team || row.team === m.away_team ? 'bg-white/5' : ''}"><td class="px-2 py-3 font-mono">${row.rank}</td><td class="px-2 py-3 font-bold text-white">${row.team}</td><td class="px-2 py-3 font-bold text-white">${row.p || row.pts}</td><td class="px-2 py-3"><div class="flex gap-1">${(row.form || "?????").split('').map(r => `<span class="w-4 h-4 flex items-center justify-center rounded-full text-[8px] text-white ${r==='W'?'bg-green-500':(r==='L'?'bg-red-500':'bg-gray-500')}">${r}</span>`).join('')}</div></td></tr>`).join('')}
-                </tbody></table></div></div>
-            `;
-            document.getElementById('modal-content').innerHTML = content;
+            document.getElementById('modal-content').innerHTML = `<div class="text-center mb-4"><div class="text-purple-400 font-bold text-xs mb-2">WIN PROBABILITY</div><div class="flex h-4 rounded-full overflow-hidden"><div style="width: ${prob.home}%" class="bg-red-600 text-[8px] text-white flex items-center justify-center">${prob.home}%</div><div style="width: ${prob.draw}%" class="bg-gray-600"></div><div style="width: ${prob.away}%" class="bg-blue-600 text-[8px] text-white flex items-center justify-center">${prob.away}%</div></div><div class="flex justify-between text-xs text-gray-500 mt-1"><span>${m.home_team}</span><span>${m.away_team}</span></div></div>`;
             document.getElementById('match-modal').classList.remove('hidden');
         }
+        function closeModal() { document.getElementById('match-modal').classList.add('hidden'); }
 
-        function toggleLanguage() {} // 简化展示
+        // 4. 首页装饰性图表 (Canvas)
+        const ctx = document.getElementById('heroChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['10\'', '20\'', '30\'', '40\'', '50\'', '60\'', '70\''],
+                datasets: [{
+                    data: [30, 45, 35, 60, 55, 85, 92],
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { x: { display: false }, y: { display: false } }
+            }
+        });
 
         // 初始化
         switchTab('home');
