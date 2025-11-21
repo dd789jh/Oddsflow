@@ -146,9 +146,9 @@
     </div>
 
    
-    <!-- 🚀 核心引擎 (v8.2 修复版) -->
+   <!-- 🚀 核心引擎 (v8.3 数据清洗版) -->
     <script>
-        // --- 1. 优先定义页面控制函数 ---
+        // --- 1. 页面控制 ---
         function switchTab(tabId){
             document.querySelectorAll('.page-section').forEach(el=>{
                 el.classList.remove('active');
@@ -161,26 +161,25 @@
                 else{btn.classList.remove('text-white');btn.classList.add('text-gray-400');}
             });
         }
-        function setActive(btn){ btn.classList.add('text-white'); btn.classList.remove('text-gray-400'); }
-        function setInactive(btn){ btn.classList.remove('text-white'); btn.classList.add('text-gray-400'); }
 
-        // --- 2. 配置与数据 (这里修复了大小写问题) ---
+        // --- 2. 配置 ---
         const SUPABASE_URL = 'https://ncubbsgzebbmoqslyukd.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_sVNMF9y0NlYxSqjqKqwySw_b1DJyEdg';
-        
-        // 🔥 修复点：使用 window.supabase.createClient
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         
         let matchesData = [];
 
+        // --- 3. 广告配置 ---
         const adsData = [
             { type: "ad", content: { brand: "👑 官方推荐: GSlot16", title: "全网最稳老虎机/真人视讯平台", desc: "大额无忧，秒充秒提。OddsFlow 用户专享开户红利。", btn_text: "进入 GSlot16 官网", link: "https://gslot16.com?ag=RS-c2VzYW1lcmFiYml0" } },
             { type: "ad", content: { brand: "⚽ BK8 亚洲第一体育", title: "OddsFlow 独家合作伙伴", desc: "英超官方赞助商。体育赛事赔率最高，新用户首存送 200%。", btn_text: "领取 BK8 红利", link: "https://www.bk8.com/" } }
         ];
 
-        // --- 3. 抓取数据 ---
+        // --- 4. 核心抓取 (增加数据清洗逻辑) ---
         async function fetchAndRender() {
             const container = document.getElementById('match-container');
+            if(!container) return;
+
             try {
                 const { data: dbMatches, error } = await supabase
                     .from('live_signals')
@@ -193,42 +192,54 @@
                 matchesData = [];
                 if (dbMatches && dbMatches.length > 0) {
                     dbMatches.forEach((match, index) => {
+                        
+                        // 🔥 数据清洗关键步骤 (Data Cleaning)
+                        // 1. 处理比分: 如果是 null 或 undefined，强制变 "0-0"
+                        let cleanScore = match.score;
+                        if (!cleanScore || cleanScore === 'null' || cleanScore === 'undefined') {
+                            cleanScore = '0-0';
+                        }
+
+                        // 2. 处理压力值: 转为数字，如果不是数字则默认 50
+                        let cleanPressure = parseInt(match.pressure_val);
+                        if (isNaN(cleanPressure)) cleanPressure = 50;
+
+                        // 3. 处理 AI 建议: 如果太长或为空，给默认值
+                        let cleanRec = match.recommendation || "正在分析市场动向...";
+                        if (cleanRec.includes("No Bet")) cleanRec = "等待机会 (观望中)"; // 翻译 No Bet
+
                         matchesData.push({ 
                             type: 'match', 
                             result: {
                                 match_info: {
-                                    league: match.league,
-                                    home_team: match.home_team,
-                                    away_team: match.away_team,
-                                    score: match.score,
-                                    time: match.time,
-                                    pressure_val: match.pressure_val,
-                                    dangerous_attacks_home: 50, 
-                                    dangerous_attacks_away: 30,
-                                    shots_on_target_home: 2,
-                                    shots_on_target_away: 1,
-                                    corners_home: 3,
-                                    corners_away: 2
+                                    league: match.league || 'Live Match',
+                                    home_team: match.home_team || '主队',
+                                    away_team: match.away_team || '客队',
+                                    score: cleanScore, // 使用清洗后的比分
+                                    time: match.time || 'Live',
+                                    pressure_val: cleanPressure // 使用清洗后的压力
                                 },
-                                beginner_friendly_text: match.recommendation || "AI 正在分析数据...",
+                                beginner_friendly_text: cleanRec,
                                 bet_recommendation: { confidence_level: "High" }
                             }
                         });
+                        
+                        // 插入广告
                         if (index === 0) matchesData.push(adsData[0]);
                         if (index === 2) matchesData.push(adsData[1]);
                     });
                 } else {
-                    if(container) container.innerHTML = `<div class="text-center text-gray-500 py-10">暂无高风险比赛，AI 正在扫描中...</div>`;
+                    container.innerHTML = `<div class="text-center text-gray-500 py-10">暂无信号，AI 正在扫描中...</div>`;
                     return;
                 }
                 renderMatches();
             } catch (err) {
                 console.error("Supabase Error:", err);
-                if(container) container.innerHTML = `<div class="text-center text-gray-500 py-10">数据连接失败，请刷新页面。</div>`;
+                container.innerHTML = `<div class="text-center text-gray-500 py-10">连接中...</div>`;
             }
         }
 
-        // --- 4. 渲染 ---
+        // --- 5. 渲染列表 ---
         function renderMatches() {
             const container = document.getElementById('match-container');
             if (!container) return;
@@ -239,23 +250,23 @@
                     html += `<div class="bg-gradient-to-r from-yellow-900/40 to-black p-5 rounded-xl border border-yellow-500/50 relative overflow-hidden mb-4"><div class="absolute top-0 right-0 bg-yellow-500 text-black text-[10px] font-bold px-2 py-1 rounded-bl-lg">SPONSORED</div><div class="flex items-start gap-4"><div class="w-12 h-12 bg-yellow-500/20 rounded-full flex items-center justify-center text-2xl">🎁</div><div class="flex-1"><div class="text-yellow-400 font-bold text-sm mb-1">${data.content.brand}</div><h3 class="text-white font-bold text-lg mb-2">${data.content.title}</h3><p class="text-gray-400 text-xs mb-4">${data.content.desc}</p><a href="${data.content.link}" target="_blank" class="inline-block w-full text-center bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-2 rounded-lg text-sm transition">${data.content.btn_text}</a></div></div><div class="mt-3 text-center"><a href="https://t.me/OddsFlowAdmin" class="text-[10px] text-gray-600 underline hover:text-gray-400">在此处投放广告 ></a></div></div>`;
                     return;
                 }
+
                 const info = data.result.match_info;
-                const pVal = info.pressure_val || 50;
+                const pVal = info.pressure_val;
                 const ai = data.result.beginner_friendly_text;
                 
-                html += `<div onclick="openModal(${index})" class="bg-glass p-5 rounded-xl border-l-4 border-emerald-500 relative overflow-hidden cursor-pointer hover:bg-gray-800/80 transition group mb-4"><div class="absolute top-2 right-2 text-gray-600 group-hover:text-emerald-500"><i class="fas fa-expand-alt"></i></div><div class="flex justify-between items-center mb-4"><div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-500 rounded-full live-dot"></span><span class="text-xs font-bold text-gray-400 uppercase truncate max-w-[200px]">${info.league || 'Live'} • ${info.time || 'Live'}</span></div><div class="bg-emerald-900/50 text-emerald-400 text-xs px-2 py-1 rounded border border-emerald-500/20 font-mono">Strong Conf</div></div><div class="flex justify-between items-center mb-4"><div class="text-lg font-bold w-1/3 text-right truncate">${info.home_team}</div><div class="w-1/3 text-center"><span class="px-3 py-1 bg-black/50 rounded text-xl font-mono font-bold text-white border border-gray-700">${info.score}</span></div><div class="text-lg font-bold w-1/3 text-left truncate">${info.away_team}</div></div><div class="mb-2"><div class="h-2 bg-gray-800 rounded-full overflow-hidden flex shadow-inner"><div style="width: ${pVal}%" class="h-full bg-blue-600"></div><div style="width: ${100-pVal}%" class="h-full bg-red-600"></div></div><div class="flex justify-between text-[10px] text-gray-500 mt-1"><span>主队压力: ${pVal}%</span><span>客队压力</span></div></div><div class="text-center text-xs text-emerald-400 font-bold mt-3 border-t border-gray-700 pt-2"><i class="fas fa-robot mr-1"></i> AI 建议: ${ai ? ai.substring(0, 15) : '分析中'}...</div></div>`;
+                html += `<div onclick="openModal(${index})" class="bg-glass p-5 rounded-xl border-l-4 border-emerald-500 relative overflow-hidden cursor-pointer hover:bg-gray-800/80 transition group mb-4"><div class="absolute top-2 right-2 text-gray-600 group-hover:text-emerald-500"><i class="fas fa-expand-alt"></i></div><div class="flex justify-between items-center mb-4"><div class="flex items-center gap-2"><span class="w-2 h-2 bg-red-500 rounded-full live-dot"></span><span class="text-xs font-bold text-gray-400 uppercase truncate max-w-[200px]">${info.league} • ${info.time}'</span></div><div class="bg-emerald-900/50 text-emerald-400 text-xs px-2 py-1 rounded border border-emerald-500/20 font-mono">Strong Conf</div></div><div class="flex justify-between items-center mb-4"><div class="text-lg font-bold w-1/3 text-right truncate">${info.home_team}</div><div class="w-1/3 text-center"><span class="px-3 py-1 bg-black/50 rounded text-xl font-mono font-bold text-white border border-gray-700">${info.score}</span></div><div class="text-lg font-bold w-1/3 text-left truncate">${info.away_team}</div></div><div class="mb-2"><div class="h-2 bg-gray-800 rounded-full overflow-hidden flex shadow-inner"><div style="width: ${pVal}%" class="h-full bg-blue-600"></div><div style="width: ${100-pVal}%" class="h-full bg-red-600"></div></div><div class="flex justify-between text-[10px] text-gray-500 mt-1"><span>主队压力: ${pVal}%</span><span>客队压力</span></div></div><div class="text-center text-xs text-emerald-400 font-bold mt-3 border-t border-gray-700 pt-2"><i class="fas fa-robot mr-1"></i> AI 建议: ${ai.substring(0, 30)}...</div></div>`;
             });
             container.innerHTML = html;
         }
 
-        // --- 5. 弹窗 & 页面控制 ---
+        // --- 6. 弹窗 & 辅助 ---
         function openModal(index) {
             const data = matchesData[index];
             if (!data || data.type !== 'match') return;
-            
             const m = data.result.match_info;
-            const aiReasoning = data.result.beginner_friendly_text || "AI 正在计算实时赔率价值...";
-            const content = `<div class="bg-gradient-to-r from-emerald-900/20 to-black p-4 rounded-xl border border-emerald-500/30 mb-6"><h4 class="text-emerald-400 font-bold text-sm mb-2"><i class="fas fa-robot"></i> AI 深度分析</h4><p class="text-gray-300 text-sm leading-relaxed">${aiReasoning}</p></div><div class="grid grid-cols-2 gap-4 mb-6"><div class="bg-gray-800 p-3 rounded text-center"><div class="text-xs text-gray-500">主队压力指数</div><div class="text-xl font-bold text-blue-400">${m.pressure_val || 50}</div></div><div class="bg-gray-800 p-3 rounded text-center"><div class="text-xs text-gray-500">比赛时间</div><div class="text-xl font-bold text-white">${m.time || 'Live'}</div></div></div><div class="text-center text-gray-500 text-xs">* 更多赛前数据 (排名/H2H) 请升级 PRO 会员查看</div>`;
+            const aiReasoning = data.result.beginner_friendly_text;
+            const content = `<div class="bg-gradient-to-r from-emerald-900/20 to-black p-4 rounded-xl border border-emerald-500/30 mb-6"><h4 class="text-emerald-400 font-bold text-sm mb-2"><i class="fas fa-robot"></i> AI 深度分析</h4><p class="text-gray-300 text-sm leading-relaxed">${aiReasoning}</p></div><div class="grid grid-cols-2 gap-4 mb-6"><div class="bg-gray-800 p-3 rounded text-center"><div class="text-xs text-gray-500">主队压力指数</div><div class="text-xl font-bold text-blue-400">${m.pressure_val}</div></div><div class="bg-gray-800 p-3 rounded text-center"><div class="text-xs text-gray-500">比赛时间</div><div class="text-xl font-bold text-white">${m.time || 'Live'}</div></div></div><div class="text-center text-gray-500 text-xs">* 更多赛前数据请升级 PRO 会员查看</div>`;
             document.getElementById('modal-content').innerHTML = content;
             const modal = document.getElementById('match-modal');
             const panel = document.getElementById('modal-panel');
@@ -270,12 +281,10 @@
             setTimeout(() => modal.classList.add('hidden'), 300);
         }
 
-        // 辅助函数
         let currentLang='zh';
         const translations={zh:{nav_home:"首页",nav_terminal:"交易终端",nav_guide:"教程",nav_pricing:"价格",btn_telegram:"加入电报群",hero_badge:"🚀 全网首个 AI 驱动的足球交易扫描仪",hero_title_1:"别再盲目入场。",hero_title_2:"开始像专家一样交易。",hero_sub:"OddsFlow 实时监控全球 500+ 场比赛。当压力指数爆表或赔率出现漏洞时，AI 会在进球发生前 2 分钟通知你。",btn_demo:"进入演示终端",btn_how:"原理是什么？",stat_matches:"每日扫描比赛",stat_latency:"数据延迟",stat_accuracy:"AI 准确率",stat_uptime:"自动化运行",dash_title:"实时监控中心",badge_alert:"绝杀预警",pressure_home:"主队施压 (92%)",pressure_away:"反击 (8%)",rec_market:"推荐盘口",ai_label:"AI 分析：",ai_text:"主队过去 5 分钟射门 4 次，角球 2 个。客队体力耗尽。进球概率极高。",lock_text:"还有 14 场高价值比赛正在进行...",lock_btn:"加入会员解锁",guide_title:"如何使用 OddsFlow 获利？",guide_1_title:"01. 看懂“压力条”",guide_1_text:"压力条显示了当前的比赛局势。如果主队压力 > 80%，说明正在围攻，买入“大球”或“主胜”胜率极高。",guide_2_title:"02. 什么是“价值注”？",guide_2_text:"当 AI 算出的真实胜率高于庄家赔率暗示的胜率时，就是价值注。长期跟投价值注，从数学上讲，你就是庄家。",price_title:"简单定价，百倍回报",price_sub:"每天只需一杯咖啡钱，获取专业机构级的数据。",plan_free:"游客版",btn_join_free:"加入体验群",plan_pro:"PRO 操盘手",btn_sub_pro:"立即订阅 (Telegram)"},en:{nav_home:"Home",nav_terminal:"Terminal",nav_guide:"Guide",nav_pricing:"Pricing",btn_telegram:"Join Telegram",hero_badge:"🚀 The #1 AI-Powered Football Trading Scanner",hero_title_1:"Stop Gambling Blindly.",hero_title_2:"Start Trading Like a Pro.",hero_sub:"OddsFlow tracks 500+ matches daily. When Pressure Index peaks or odds drop, AI alerts you 2 minutes before the goal happens.",btn_demo:"Launch Terminal",btn_how:"How it Works?",stat_matches:"Daily Matches",stat_latency:"Data Latency",stat_accuracy:"AI Accuracy",stat_uptime:"System Uptime",dash_title:"Live Monitor",badge_alert:"GOAL ALERT",pressure_home:"Home Pressure (92%)",pressure_away:"Counter (8%)",rec_market:"Market",ai_label:"AI Insight:",ai_text:"Home team 4 shots in last 5 mins. Away team exhausted. Goal probability is critical.",lock_text:"14 more high-value matches in progress...",lock_btn:"Unlock Full Data",guide_title:"How to Profit with OddsFlow?",guide_1_title:"01. The Pressure Gauge",guide_1_text:"Visualizes momentum. If Home Pressure > 80%, they are sieging. High probability for Over Goals or Home Win.",guide_2_title:"02. What is Value Bet?",guide_2_text:"When AI probability is higher than Bookie implied probability. Mathematically, you become the House in the long run.",price_title:"Simple Price. Huge ROI.",price_sub:"Professional institutional data for the price of a coffee.",plan_free:"Guest",btn_join_free:"Join Free Group",plan_pro:"PRO Trader",btn_sub_pro:"Subscribe Now (Telegram)"}};
         function toggleLanguage(){currentLang=currentLang==='zh'?'en':'zh';document.getElementById('lang-display').innerHTML=currentLang==='zh'?'EN / <span class="text-emerald-500">CN</span>':'<span class="text-emerald-500">EN</span> / CN';document.querySelectorAll('[data-i18n]').forEach(el=>{const key=el.getAttribute('data-i18n');if(translations[currentLang][key]){el.innerText=translations[currentLang][key];}});}
         
-        // 6. 启动引擎
         switchTab('home');
-        fetchAndRender(); 
+        fetchAndRender();
     </script>
