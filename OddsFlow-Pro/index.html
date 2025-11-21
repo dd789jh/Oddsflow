@@ -43,7 +43,6 @@
                 <span>🏆 EPL: Chelsea vs Burnley Analysis Ready</span>
                 <span>💰 VALUE: High Confidence Bets Generated</span>
                 <span>🚨 ALERT: Dropping Odds in Asian Market</span>
-                <!-- 重复 -->
                 <span>🚀 SIGNAL: Live Pressure Spike Detected</span>
                 <span>🏆 EPL: Chelsea vs Burnley Analysis Ready</span>
                 <span>💰 VALUE: High Confidence Bets Generated</span>
@@ -140,22 +139,9 @@
         </div>
     </div>
 
-    <!-- 🚀 核心引擎 -->
+    <!-- 🚀 核心引擎 (v10.1 防卡死版) -->
     <script>
-        // 1. 配置
-        const SUPABASE_URL = 'https://ncubbsgzebbmoqslyukd.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_sVNMF9y0NlYxSqjqKqwySw_b1DJyEdg';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        
-        let liveData = [];
-        let eplData = [];
-
-        const adsData = [
-            { type: "ad", content: { brand: "👑 官方推荐: GSlot16", title: "全网最稳老虎机/真人视讯平台", desc: "大额无忧，秒充秒提。", btn_text: "进入 GSlot16 官网", link: "https://gslot16.com?ag=RS-c2VzYW1lcmFiYml0" } },
-            { type: "ad", content: { brand: "⚽ BK8 亚洲第一体育", title: "OddsFlow 独家合作伙伴", desc: "英超官方赞助商。体育赛事赔率最高。", btn_text: "领取 BK8 红利", link: "https://www.bk8.com/" } }
-        ];
-
-        // 2. 页面切换逻辑
+        // 1. 优先定义页面切换 (保证按钮永远可点)
         function switchTab(tabId){
             document.querySelectorAll('.page-section').forEach(el=>{ el.classList.remove('active'); setTimeout(()=>{if(!el.classList.contains('active'))el.style.display='none';},300); });
             const target=document.getElementById(tabId);
@@ -171,11 +157,135 @@
                 }
             });
 
+            // 异步加载数据，不阻塞UI
             if(tabId === 'dashboard') fetchLiveMatches();
             if(tabId === 'epl') fetchEPL();
         }
 
+        function closeModal() { document.getElementById('match-modal').classList.add('hidden'); }
+
+        // 2. 数据层 (带容错机制)
+        let supabase = null;
+        let liveData = [];
+        let eplData = [];
+
+        try {
+            const SUPABASE_URL = 'https://ncubbsgzebbmoqslyukd.supabase.co';
+            const SUPABASE_KEY = 'sb_publishable_sVNMF9y0NlYxSqjqKqwySw_b1DJyEdg';
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        } catch (e) {
+            console.error("Supabase Init Failed:", e);
+        }
+
+        const adsData = [
+            { type: "ad", content: { brand: "👑 官方推荐: GSlot16", title: "全网最稳老虎机/真人视讯平台", desc: "大额无忧，秒充秒提。", btn_text: "进入 GSlot16 官网", link: "https://gslot16.com?ag=RS-c2VzYW1lcmFiYml0" } },
+            { type: "ad", content: { brand: "⚽ BK8 亚洲第一体育", title: "OddsFlow 独家合作伙伴", desc: "英超官方赞助商。体育赛事赔率最高。", btn_text: "领取 BK8 红利", link: "https://www.bk8.com/" } }
+        ];
+
         // 3. 抓取实时比赛 (Live)
         async function fetchLiveMatches() {
+            if(!supabase) return;
             const container = document.getElementById('match-container');
             try {
+                const { data, error } = await supabase.from('live_signals').select('*').order('created_at', { ascending: false }).limit(20);
+                if(error) throw error;
+                
+                liveData = [];
+                if(data && data.length > 0) {
+                    data.forEach((m, i) => {
+                        liveData.push({ type: 'match', result: m });
+                        if(i===0) liveData.push(adsData[0]);
+                        if(i===2) liveData.push(adsData[1]);
+                    });
+                    renderLiveList();
+                } else {
+                    container.innerHTML = '<div class="text-center text-gray-500 py-10">AI 正在扫描中，暂无高风险比赛...</div>';
+                }
+            } catch(e) { console.error(e); container.innerHTML = '<div class="text-center text-gray-500">数据连接中...</div>'; }
+        }
+
+        // 4. 抓取英超 (EPL)
+        async function fetchEPL() {
+            if(!supabase) return;
+            const container = document.getElementById('epl-container');
+            try {
+                const { data, error } = await supabase.from('upcoming_epl').select('*').order('created_at', { ascending: false });
+                
+                if(data && data.length > 0) {
+                    eplData = data;
+                } else {
+                    // 默认演示数据 (防止空白难看)
+                    eplData = [
+                        {
+                            start_date: "2025-11-22T12:30:00Z",
+                            home_team: "Burnley FC", away_team: "Chelsea FC", venue: "Turf Moor",
+                            home_logo: "https://cdn.opticodds.com/team-logos/soccer/3763.png",
+                            away_logo: "https://cdn.opticodds.com/team-logos/soccer/4009.png",
+                            win_prob_home: 14, win_prob_draw: 21, win_prob_away: 65,
+                            standings_json: [{ rank: 3, team: "Chelsea", p: 20, form: "WWLWW" }, { rank: 19, team: "Burnley", p: 5, form: "LLDLL" }]
+                        }
+                    ];
+                }
+                renderEPLList();
+            } catch(e) { console.error(e); }
+        }
+
+        // --- 渲染函数 ---
+
+        function renderLiveList() {
+            const container = document.getElementById('match-container');
+            let html = '';
+            liveData.forEach((item, index) => {
+                if(item.type === 'ad') {
+                    html += `<div class="bg-gradient-to-r from-yellow-900/40 to-black p-5 rounded-xl border border-yellow-500/50 mb-4"><div class="text-yellow-400 font-bold text-sm mb-1">${item.content.brand}</div><h3 class="text-white font-bold text-lg mb-2">${item.content.title}</h3><a href="${item.content.link}" target="_blank" class="block text-center bg-yellow-500 text-black font-bold py-2 rounded-lg text-sm">${item.content.btn_text}</a></div>`;
+                    return;
+                }
+                const m = item.result;
+                const pVal = parseInt(m.pressure_val) || 50;
+                html += `<div onclick="openLiveModal(${index})" class="bg-glass p-5 rounded-xl border-l-4 border-emerald-500 cursor-pointer hover:bg-gray-800/80 transition mb-4"><div class="flex justify-between text-xs text-gray-400 mb-4"><span>${m.league || 'Live'} • ${m.time || 'Live'}</span><span class="text-emerald-400 font-mono">Strong Signal</span></div><div class="flex justify-between items-center mb-4"><span class="text-lg font-bold w-1/3 text-right truncate">${m.home_team}</span><span class="px-3 py-1 bg-black/50 rounded text-white font-mono">${m.score || '0-0'}</span><span class="text-lg font-bold w-1/3 text-left truncate">${m.away_team}</span></div><div class="h-2 bg-gray-800 rounded-full overflow-hidden flex shadow-inner mb-2"><div style="width: ${pVal}%" class="h-full bg-blue-600"></div><div style="width: ${100-pVal}%" class="h-full bg-red-600"></div></div><div class="text-center text-xs text-gray-500">AI: ${m.recommendation ? m.recommendation.substring(0,20) : '分析中...'}...</div></div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function renderEPLList() {
+            const container = document.getElementById('epl-container');
+            let html = '';
+            eplData.forEach((m, index) => {
+                const date = new Date(m.start_date);
+                const timeStr = date.toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                html += `<div onclick="openEPLModal(${index})" class="bg-[#1a1a1a] p-6 rounded-xl border border-purple-900/30 relative overflow-hidden cursor-pointer hover:border-purple-500 transition group"><div class="absolute top-0 left-0 bg-purple-600 text-white text-[10px] px-2 py-1 rounded-br-lg">EPL PREVIEW</div><div class="absolute top-2 right-2 text-gray-600 group-hover:text-purple-400"><i class="fas fa-chart-bar"></i> 分析</div><div class="text-center text-xs text-gray-500 mb-4">${timeStr} • ${m.venue}</div><div class="flex justify-between items-center"><div class="text-center w-1/3"><img src="${m.home_logo}" class="w-12 h-12 mx-auto mb-2 drop-shadow-lg"><div class="font-bold text-white text-sm">${m.home_team}</div></div><div class="text-2xl font-bold text-gray-700 font-mono">VS</div><div class="text-center w-1/3"><img src="${m.away_logo}" class="w-12 h-12 mx-auto mb-2 drop-shadow-lg"><div class="font-bold text-white text-sm">${m.away_team}</div></div></div></div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function openLiveModal(i) {
+            const m = liveData[i].result;
+            const pVal = parseInt(m.pressure_val) || 50;
+            const content = `<div class="bg-gradient-to-r from-emerald-900/20 to-black p-4 rounded-xl border border-emerald-500/30 mb-6"><h4 class="text-emerald-400 font-bold text-sm mb-2"><i class="fas fa-robot"></i> AI 深度分析</h4><p class="text-gray-300 text-sm leading-relaxed">${m.recommendation || '正在计算实时赔率价值...'}</p></div><div class="grid grid-cols-2 gap-4 mb-6"><div class="bg-gray-800 p-3 rounded text-center"><div class="text-xs text-gray-500">主队压力指数</div><div class="text-xl font-bold text-blue-400">${pVal}</div></div><div class="bg-gray-800 p-3 rounded text-center"><div class="text-xs text-gray-500">比赛时间</div><div class="text-xl font-bold text-white">${m.time || 'Live'}</div></div></div>`;
+            document.getElementById('modal-content').innerHTML = content;
+            document.getElementById('match-modal').classList.remove('hidden');
+        }
+
+        function openEPLModal(i) {
+            const m = eplData[i];
+            const prob = { home: m.win_prob_home || 33, draw: m.win_prob_draw || 33, away: m.win_prob_away || 34 };
+            let standings = [];
+            try { standings = typeof m.standings_json === 'string' ? JSON.parse(m.standings_json) : m.standings_json; } catch(e){ standings = []; }
+            if(!standings) standings = [];
+
+            const content = `
+                <div class="flex justify-between items-center mb-8 px-4"><div class="text-center"><img src="${m.home_logo}" class="w-16 h-16 mx-auto mb-2"><h3 class="text-lg font-bold text-white">${m.home_team}</h3></div><div class="text-center"><div class="text-xs text-gray-500 uppercase tracking-widest">Win Probability</div><div class="text-3xl font-black text-white italic">VS</div></div><div class="text-center"><img src="${m.away_logo}" class="w-16 h-16 mx-auto mb-2"><h3 class="text-lg font-bold text-white">${m.away_team}</h3></div></div>
+                <div class="mb-8 bg-gray-900 p-4 rounded-xl border border-gray-800"><div class="flex justify-between text-xs text-gray-400 mb-2"><span class="text-red-500 font-bold">${prob.home}%</span><span>Draw ${prob.draw}%</span><span class="text-blue-500 font-bold">${prob.away}%</span></div><div class="flex h-3 rounded-full overflow-hidden"><div style="width: ${prob.home}%" class="bg-red-600 h-full"></div><div style="width: ${prob.draw}%" class="bg-gray-600 h-full"></div><div style="width: ${prob.away}%" class="bg-blue-600 h-full"></div></div></div>
+                <div class="mb-4"><h4 class="text-white font-bold text-sm mb-3 border-l-2 border-purple-500 pl-2">LIVE STANDINGS</h4><div class="overflow-x-auto"><table class="w-full text-xs text-left text-gray-400"><thead class="text-xs text-gray-500 uppercase bg-gray-800/50"><tr><th class="px-2 py-2">#</th><th class="px-2 py-2">Team</th><th class="px-2 py-2">Pts</th><th class="px-2 py-2">Form</th></tr></thead><tbody class="divide-y divide-gray-800">
+                ${standings.map(row => `<tr class="${row.team === m.home_team || row.team === m.away_team ? 'bg-white/5' : ''}"><td class="px-2 py-3 font-mono">${row.rank}</td><td class="px-2 py-3 font-bold text-white">${row.team}</td><td class="px-2 py-3 font-bold text-white">${row.p || row.pts}</td><td class="px-2 py-3"><div class="flex gap-1">${(row.form || "?????").split('').map(r => `<span class="w-4 h-4 flex items-center justify-center rounded-full text-[8px] text-white ${r==='W'?'bg-green-500':(r==='L'?'bg-red-500':'bg-gray-500')}">${r}</span>`).join('')}</div></td></tr>`).join('')}
+                </tbody></table></div></div>
+            `;
+            document.getElementById('modal-content').innerHTML = content;
+            document.getElementById('match-modal').classList.remove('hidden');
+        }
+
+        // 初始化
+        switchTab('home');
+    </script>
+</body>
+</html>
