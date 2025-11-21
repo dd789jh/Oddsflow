@@ -208,83 +208,140 @@
             renderEPL(mockEPL);
         }
 
-        // --- 渲染函数 ---
+        // --- 英超专属渲染逻辑 (v9.1 视觉增强版) ---
 
-        function renderLiveList() {
-            const container = document.getElementById('match-container');
-            let html = '';
-            matchesData.forEach((item, index) => {
-                if(item.type === 'ad') {
-                    html += `<div class="bg-gradient-to-r from-yellow-900/40 to-black p-5 rounded-xl border border-yellow-500/50 mb-4"><div class="text-yellow-400 font-bold text-sm mb-1">${item.content.brand}</div><h3 class="text-white font-bold text-lg mb-2">${item.content.title}</h3><a href="${item.content.link}" target="_blank" class="block text-center bg-yellow-500 text-black font-bold py-2 rounded-lg text-sm">${item.content.btn_text}</a></div>`;
-                    return;
-                }
-                const m = item.result;
-                const pVal = m.pressure_val || 50;
-                html += `<div onclick="openModal(${index})" class="bg-glass p-5 rounded-xl border-l-4 border-emerald-500 cursor-pointer hover:bg-gray-800/80 transition mb-4"><div class="flex justify-between text-xs text-gray-400 mb-4"><span>${m.league || 'Live'} • ${m.time || 'Live'}</span><span class="text-emerald-400 font-mono">Strong Signal</span></div><div class="flex justify-between items-center mb-4"><span class="text-lg font-bold w-1/3 text-right truncate">${m.home_team}</span><span class="px-3 py-1 bg-black/50 rounded text-white font-mono">${m.score || '0-0'}</span><span class="text-lg font-bold w-1/3 text-left truncate">${m.away_team}</span></div><div class="h-2 bg-gray-800 rounded-full overflow-hidden flex shadow-inner mb-2"><div style="width: ${pVal}%" class="h-full bg-blue-600"></div><div style="width: ${100-pVal}%" class="h-full bg-red-600"></div></div><div class="text-center text-xs text-gray-500">AI: ${m.recommendation || '分析中...'}</div></div>`;
-            });
-            container.innerHTML = html;
-        }
-
+        // 1. 渲染列表 (卡片)
         function renderEPL(data) {
             const container = document.getElementById('epl-container');
             let html = '';
-            data.forEach(m => {
+            
+            data.forEach((m, index) => {
                 // 时间格式化
                 const date = new Date(m.start_date);
                 const timeStr = date.toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
+                // 将数据存入全局变量，方便弹窗调用
+                // 注意：这里假设 N8N 已经把 win_prob 等数据存进去了
+                // 如果还没存，页面会显示默认值
+                
                 html += `
-                <div class="bg-[#1a1a1a] p-6 rounded-xl border border-purple-900/30 relative overflow-hidden">
-                    <div class="absolute top-0 left-0 bg-purple-600 text-white text-[10px] px-2 py-1 rounded-br-lg">EPL PREVIEW</div>
+                <div onclick="openEPLModal(${index})" class="bg-[#1a1a1a] p-6 rounded-xl border border-purple-900/30 relative overflow-hidden cursor-pointer hover:border-purple-500 transition group">
+                    <div class="absolute top-0 left-0 bg-purple-600 text-white text-[10px] px-2 py-1 rounded-br-lg">PREMIER LEAGUE</div>
+                    <div class="absolute top-2 right-2 text-gray-600 group-hover:text-purple-400"><i class="fas fa-chart-bar"></i> 分析</div>
+                    
                     <div class="text-center text-xs text-gray-500 mb-4">${timeStr} • ${m.venue}</div>
                     
                     <div class="flex justify-between items-center">
                         <div class="text-center w-1/3">
-                            <img src="${m.home_logo}" class="w-12 h-12 mx-auto mb-2 epl-logo-shadow" alt="Home">
+                            <img src="${m.home_logo}" class="w-12 h-12 mx-auto mb-2 drop-shadow-lg" alt="Home">
                             <div class="font-bold text-white text-sm">${m.home_team}</div>
                         </div>
-                        <div class="text-2xl font-bold text-gray-600 font-mono">VS</div>
+                        <div class="text-2xl font-bold text-gray-700 font-mono">VS</div>
                         <div class="text-center w-1/3">
-                            <img src="${m.away_logo}" class="w-12 h-12 mx-auto mb-2 epl-logo-shadow" alt="Away">
+                            <img src="${m.away_logo}" class="w-12 h-12 mx-auto mb-2 drop-shadow-lg" alt="Away">
                             <div class="font-bold text-white text-sm">${m.away_team}</div>
                         </div>
-                    </div>
-                    
-                    <div class="mt-6 pt-4 border-t border-white/5 text-center">
-                        <a href="https://t.me/footballscbet_bot" target="_blank" class="text-purple-400 text-xs font-bold hover:text-purple-300">查看 AI 赛前预测 ></a>
                     </div>
                 </div>`;
             });
             container.innerHTML = html;
-        }
-
-        // --- 页面控制 ---
-        function switchTab(tabId){
-            document.querySelectorAll('.page-section').forEach(el=>{ el.classList.remove('active'); setTimeout(()=>{if(!el.classList.contains('active'))el.style.display='none';},300); });
-            const target=document.getElementById(tabId);
-            if(target) { target.style.display='block'; setTimeout(()=>target.classList.add('active'),10); }
             
-            document.querySelectorAll('.nav-btn').forEach(btn=>{
-                btn.classList.remove('text-white'); btn.classList.add('text-gray-400');
-                if(btn.getAttribute('data-target') === tabId) { btn.classList.add('text-white'); btn.classList.remove('text-gray-400'); }
-            });
-
-            // 只有切换到对应页面才加载数据，节省资源
-            if(tabId === 'dashboard') fetchLiveMatches();
-            if(tabId === 'epl') fetchEPL();
+            // 把数据存到 window 对象，给弹窗用
+            window.eplData = data;
         }
 
-        function openModal(i) {
-            const m = matchesData[i].result;
-            document.getElementById('modal-content').innerHTML = `<div class="text-center"><h3 class="text-xl font-bold text-white mb-4">${m.home_team} vs ${m.away_team}</h3><p class="text-gray-400 text-sm">${m.recommendation || '暂无详细描述'}</p></div>`;
+        // 2. 打开英超详情弹窗 (核心：画胜率条和积分榜)
+        function openEPLModal(index) {
+            const m = window.eplData[index];
+            
+            // --- 模拟数据 (如果你数据库还没这两个字段，用这个兜底，防止报错) ---
+            const prob = {
+                home: m.win_prob_home || 14, // 伯恩利
+                draw: m.win_prob_draw || 21,
+                away: m.win_prob_away || 65  // 切尔西
+            };
+            
+            // 模拟积分榜 (真实情况是从 m.standings_json 读取)
+            // 这里为了演示效果，我写死了你截图里的数据
+            const standings = m.standings_json || [
+                { rank: 1, team: "Arsenal", p: 26, form: "WWWWD" },
+                { rank: 2, team: "Man City", p: 22, form: "WWLWW" },
+                { rank: 3, team: "Chelsea", p: 20, form: "WWLWW" },
+                { rank: 4, team: "Sunderland", p: 19, form: "LWWDD" }
+            ];
+
+            // --- 生成 HTML ---
+            const content = `
+                <!-- 1. 对阵头部 -->
+                <div class="flex justify-between items-center mb-8 px-4">
+                    <div class="text-center">
+                        <img src="${m.home_logo}" class="w-16 h-16 mx-auto mb-2">
+                        <h3 class="text-lg font-bold text-white">${m.home_team}</h3>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-xs text-gray-500 uppercase tracking-widest">Win Probability</div>
+                        <div class="text-3xl font-black text-white italic">VS</div>
+                    </div>
+                    <div class="text-center">
+                        <img src="${m.away_logo}" class="w-16 h-16 mx-auto mb-2">
+                        <h3 class="text-lg font-bold text-white">${m.away_team}</h3>
+                    </div>
+                </div>
+
+                <!-- 2. 胜率进度条 (Win Probability) -->
+                <div class="mb-8 bg-gray-900 p-4 rounded-xl border border-gray-800">
+                    <div class="flex justify-between text-xs text-gray-400 mb-2">
+                        <span class="text-red-500 font-bold">${m.home_team} ${prob.home}%</span>
+                        <span>Draw ${prob.draw}%</span>
+                        <span class="text-blue-500 font-bold">${m.away_team} ${prob.away}%</span>
+                    </div>
+                    <div class="flex h-3 rounded-full overflow-hidden">
+                        <div style="width: ${prob.home}%" class="bg-red-600 h-full"></div>
+                        <div style="width: ${prob.draw}%" class="bg-gray-600 h-full"></div>
+                        <div style="width: ${prob.away}%" class="bg-blue-600 h-full"></div>
+                    </div>
+                </div>
+
+                <!-- 3. 积分榜 (Standings) -->
+                <div class="mb-4">
+                    <h4 class="text-white font-bold text-sm mb-3 border-l-2 border-purple-500 pl-2">LIVE STANDINGS</h4>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs text-left text-gray-400">
+                            <thead class="text-xs text-gray-500 uppercase bg-gray-800/50">
+                                <tr>
+                                    <th class="px-2 py-2">#</th>
+                                    <th class="px-2 py-2">Team</th>
+                                    <th class="px-2 py-2">Pts</th>
+                                    <th class="px-2 py-2">Form</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-800">
+                                ${standings.map(row => `
+                                <tr class="${row.team === m.home_team || row.team === m.away_team ? 'bg-white/5' : ''}">
+                                    <td class="px-2 py-3 font-mono">${row.rank}</td>
+                                    <td class="px-2 py-3 font-bold text-white flex items-center gap-2">
+                                        ${row.team}
+                                    </td>
+                                    <td class="px-2 py-3 font-bold text-white">${row.p}</td>
+                                    <td class="px-2 py-3">
+                                        <div class="flex gap-1">
+                                            ${row.form.split('').map(r => 
+                                                `<span class="w-4 h-4 flex items-center justify-center rounded-full text-[8px] text-white ${r==='W'?'bg-green-500':(r==='L'?'bg-red-500':'bg-gray-500')}">${r}</span>`
+                                            ).join('')}
+                                        </div>
+                                    </td>
+                                </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+
+            // 注入并显示
+            document.getElementById('modal-content').innerHTML = content;
             const modal = document.getElementById('match-modal');
+            const panel = document.getElementById('modal-panel');
             modal.classList.remove('hidden');
+            setTimeout(() => panel.classList.remove('translate-y-full'), 10);
         }
-        function closeModal() { document.getElementById('match-modal').classList.add('hidden'); }
-        function toggleLanguage() {} // 简化演示
-
-        // 初始化
-        switchTab('home');
-    </script>
-</body>
-</html>
