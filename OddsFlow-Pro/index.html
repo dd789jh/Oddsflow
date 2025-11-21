@@ -76,7 +76,13 @@
         <section id="home" class="page-section active min-h-full">
             <div class="max-w-7xl mx-auto px-6 py-20 text-center">
                 <div class="inline-block px-4 py-1.5 rounded-full bg-emerald-900/30 border border-emerald-500/30 text-emerald-400 text-xs font-bold mb-8">🚀 全网首个 AI 驱动的足球交易扫描仪</div>
-                <h1 class="text-5xl md:text-7xl font-black mb-6 leading-tight">别再盲目入场。<br><span class="text-gradient">开始像专家一样交易。</span></h1>
+                
+                <!-- 🔥 修复重点：强制渐变色 -->
+                <h1 class="text-5xl md:text-7xl font-black mb-6 leading-tight">
+                    别再盲目入场。<br>
+                    <span class="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-blue-500">开始像专家一样交易。</span>
+                </h1>
+                
                 <p class="text-xl text-gray-400 max-w-2xl mx-auto mb-10">OddsFlow 实时监控全球 500+ 场比赛。当压力指数爆表或赔率出现漏洞时，AI 会在进球发生前 2 分钟通知你。</p>
                 <div class="flex justify-center gap-4">
                     <button onclick="switchTab('dashboard')" class="px-8 py-4 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition shadow-xl">进入实时终端</button>
@@ -96,7 +102,7 @@
             </div>
         </section>
 
-        <!-- 🔥 英超前瞻 (EPL) -->
+        <!-- 英超前瞻 (EPL) -->
         <section id="epl" class="page-section">
             <div class="text-center py-8">
                 <h1 class="text-2xl font-bold mb-2 text-purple-400">英超赛事前瞻</h1>
@@ -107,7 +113,7 @@
             </div>
         </section>
 
-        <!-- 教程 & 价格 -->
+        <!-- 教程 -->
         <section id="guide" class="page-section">
             <div class="max-w-4xl mx-auto px-6 py-12 text-center">
                 <h1 class="text-3xl font-bold mb-8">如何获利？</h1>
@@ -128,7 +134,7 @@
 
     </main>
 
-    <!-- 通用弹窗 (支持 Live 和 EPL) -->
+    <!-- 通用弹窗 -->
     <div id="match-modal" class="fixed inset-0 z-[100] hidden">
         <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeModal()"></div>
         <div class="absolute inset-x-0 bottom-0 md:inset-0 md:flex md:items-center md:justify-center pointer-events-none">
@@ -139,9 +145,9 @@
         </div>
     </div>
 
-    <!-- 🚀 核心引擎 (v10.1 防卡死版) -->
+    <!-- 🚀 核心引擎 -->
     <script>
-        // 1. 优先定义页面切换 (保证按钮永远可点)
+        // 1. 优先定义页面切换
         function switchTab(tabId){
             document.querySelectorAll('.page-section').forEach(el=>{ el.classList.remove('active'); setTimeout(()=>{if(!el.classList.contains('active'))el.style.display='none';},300); });
             const target=document.getElementById(tabId);
@@ -157,14 +163,13 @@
                 }
             });
 
-            // 异步加载数据，不阻塞UI
             if(tabId === 'dashboard') fetchLiveMatches();
             if(tabId === 'epl') fetchEPL();
         }
 
         function closeModal() { document.getElementById('match-modal').classList.add('hidden'); }
 
-        // 2. 数据层 (带容错机制)
+        // 2. 数据层
         let supabase = null;
         let liveData = [];
         let eplData = [];
@@ -214,7 +219,7 @@
                 if(data && data.length > 0) {
                     eplData = data;
                 } else {
-                    // 默认演示数据 (防止空白难看)
+                    // 演示数据
                     eplData = [
                         {
                             start_date: "2025-11-22T12:30:00Z",
