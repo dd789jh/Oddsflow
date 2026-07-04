@@ -1,10 +1,24 @@
 """
 X to Telegram 自动转发配置
+
+敏感信息 (Token, Chat ID) 存放在 .env 文件中，不会提交到 Git。
 """
 
-# Telegram Bot 配置
-TELEGRAM_BOT_TOKEN = "YOUR_BOT_TOKEN"  # 从 @BotFather 获取
-TELEGRAM_CHAT_ID = "YOUR_CHAT_ID"      # 目标群组 ID (例: -1001234567890)
+import os
+from pathlib import Path
+
+# 加载 .env 文件
+_env_path = Path(__file__).parent / ".env"
+if _env_path.exists():
+    for line in _env_path.read_text().splitlines():
+        line = line.strip()
+        if line and not line.startswith("#") and "=" in line:
+            key, _, value = line.partition("=")
+            os.environ.setdefault(key.strip(), value.strip())
+
+# Telegram Bot 配置 (从 .env 读取)
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
 
 # 要监控的 X 账户列表 (不带 @)
 X_ACCOUNTS = [
