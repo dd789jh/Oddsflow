@@ -22,7 +22,7 @@ TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
 
 # 要监控的 X 账户列表 (不带 @)
 X_ACCOUNTS = [
-    "elaboratecon",
+    "centregoals",
     # 添加更多账户...
 ]
 
